@@ -7,15 +7,15 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: postgres
-      POSTGRES_EXTRA_DATABASES: games,wallets
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_EXTRA_DATABASES: games,wallets,logto
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -29,8 +29,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-admin}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -40,25 +40,21 @@ services:
       retries: 10
 
   # ---------------------------------------------------------------------------
-  # Keycloak (Identity Provider)
+  # Logto (Identity Provider)
   # ---------------------------------------------------------------------------
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.5.5
-    command: start-dev --import-realm
+  logto:
+    image: svhd/logto:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "npm run cli db seed -- --swe && npm start"]
     ports:
-      - "8080:8080"
+      - "3001:3001"
+      - "3002:3002"
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-      KC_HEALTH_ENABLED: "true"
-    volumes:
-      - ./docker/keycloak:/opt/keycloak/data/import:ro
-    healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q '200'"]
-      interval: 10s
-      timeout: 5s
-      retries: 15
-      start_period: 30s
+      - DB_URL=postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/logto
+      - ENDPOINT=${LOGTO_ENDPOINT:-http://localhost:3001}
+      - ADMIN_ENDPOINT=${LOGTO_ADMIN_ENDPOINT:-http://localhost:3002}
 
   # ---------------------------------------------------------------------------
   # Kong (API Gateway — DB-less / declarative)
@@ -137,16 +133,16 @@ services:
       start_period: 15s
 
   # ---------------------------------------------------------------------------
-  # Frontend (placeholder — candidate implements)
+  # Frontend
   # ---------------------------------------------------------------------------
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - kong
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - kong
 
 volumes:
   postgres_data:
