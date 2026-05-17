@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Wallet } from '../../../domain/wallet/wallet.entity';
 import { InboxEvent } from '../../../infrastructure/messaging/inbox/inbox-event.entity';
 import { BaseRepository } from '../../../infrastructure/db/base.repository';
-import { CreditWalletCommand } from '../commands/credit-wallet.command';
+import { CreditWalletCommand } from '../dtos/credit-wallet.command';
 
 @Injectable()
 export class CreditWalletUseCase {

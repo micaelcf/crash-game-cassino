@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common'
 import { Bet } from '../../../domain/bet/bet.entity'
 import { Round } from '../../../domain/round/round.entity'
 import { BaseRepository } from '../../../infrastructure/db/base.repository'
-import { type RoundView, roundToView } from '../views/round-view.dto'
+import { type RoundDto, toRoundDto } from '../dtos/round.dto'
 
 @Injectable()
 export class GetCurrentRoundUseCase {
@@ -14,16 +14,16 @@ export class GetCurrentRoundUseCase {
 		private readonly bets: BaseRepository<Bet>,
 	) {}
 
-	async execute(): Promise<RoundView | null> {
-		const round = await this.rounds.findOne(
-			{},
-			{ orderBy: { createdAt: 'desc' } },
-		)
+	async execute(): Promise<RoundDto | null> {
+		const [round] = await this.rounds.findAll({
+			orderBy: { createdAt: 'desc' },
+			limit: 1,
+		})
 		if (!round) return null
 		const bets = await this.bets.find(
 			{ roundId: round.id },
 			{ orderBy: { createdAt: 'asc' } },
 		)
-		return roundToView(round, bets)
+		return toRoundDto(round, bets)
 	}
 }

@@ -1,6 +1,9 @@
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { ApplicationModule } from '../application/application.module';
+import { Bet } from '../domain/bet/bet.entity';
+import { Round } from '../domain/round/round.entity';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { CqrsBusModule } from './cqrs/cqrs.module';
@@ -29,6 +32,7 @@ const orchestratorConfig: RoundOrchestratorConfig = {
     CqrsBusModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     MessagingModule,
+    MikroOrmModule.forFeature([Round, Bet]),
   ],
   controllers: [HealthController, BetsController, RoundsController],
   providers: [

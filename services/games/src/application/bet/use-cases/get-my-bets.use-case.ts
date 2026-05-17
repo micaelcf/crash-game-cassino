@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common'
 import { Bet } from '../../../domain/bet/bet.entity'
 import { BaseRepository } from '../../../infrastructure/db/base.repository'
 import { PagedResult } from '../../shared/paged-result'
-import { GetMyBetsQuery } from '../queries/get-my-bets.query'
-import { BetView, betToView } from '../views/bet-view.dto'
+import { BetDto, toBetDto } from '../dtos/bet.dto'
+import { GetMyBetsQuery } from '../dtos/get-my-bets.query'
 
 @Injectable()
 export class GetMyBetsUseCase {
@@ -13,7 +13,7 @@ export class GetMyBetsUseCase {
 		private readonly bets: BaseRepository<Bet>,
 	) {}
 
-	async execute(query: GetMyBetsQuery): Promise<PagedResult<BetView>> {
+	async execute(query: GetMyBetsQuery): Promise<PagedResult<BetDto>> {
 		const [bets, total] = await this.bets.findAndCount(
 			{ userId: query.userId },
 			{
@@ -23,7 +23,7 @@ export class GetMyBetsUseCase {
 			},
 		)
 		return {
-			items: bets.map(betToView),
+			items: bets.map(toBetDto),
 			page: query.page,
 			pageSize: query.pageSize,
 			total,

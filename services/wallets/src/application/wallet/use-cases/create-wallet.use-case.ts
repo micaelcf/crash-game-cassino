@@ -2,7 +2,7 @@ import { InjectRepository } from '@mikro-orm/nestjs'
 import { ConflictException, Injectable } from '@nestjs/common'
 import { Wallet } from '../../../domain/wallet/wallet.entity'
 import type { BaseRepository } from '../../../infrastructure/db/base.repository'
-import type { CreateWalletCommand } from '../commands/create-wallet.command'
+import type { CreateWalletCommand } from '../dtos/create-wallet.command'
 
 const DEFAULT_BALANCE_CENTS = 100000n
 

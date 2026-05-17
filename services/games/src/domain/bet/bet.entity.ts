@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { defineEntity, type InferEntity } from '@mikro-orm/core'
 import { BigIntType } from '../../infrastructure/db/bigint.type'
 import { BetAlreadySettledException } from './bet.exceptions'
@@ -20,7 +21,7 @@ export const BetSchema = defineEntity({
 	name: 'Bet',
 	tableName: 'bets',
 	properties: (p) => ({
-		id: p.uuid().primary(),
+		id: p.uuid().primary().onCreate(() => randomUUID()),
 		roundId: p.string(),
 		userId: p.string(),
 		username: p.string(),

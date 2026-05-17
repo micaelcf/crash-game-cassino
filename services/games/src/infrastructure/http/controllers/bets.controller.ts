@@ -10,7 +10,7 @@ import {
 	Req,
 	UseGuards,
 } from '@nestjs/common'
-import type { CommandBus, QueryBus } from '@nestjs/cqrs'
+import { CommandBus, QueryBus } from '@nestjs/cqrs'
 import {
 	ApiBearerAuth,
 	ApiCreatedResponse,
@@ -60,12 +60,18 @@ export class BetsController {
 	@ApiOperation({ summary: 'Place a bet on the current round.' })
 	@ApiCreatedResponse({ description: 'Bet accepted; persisted in PENDING.' })
 	async placeBet(@Req() req: any, @Body() body: PlaceBetDto) {
+		let amountCents: bigint
+		try {
+			amountCents = BigInt(body.amount)
+		} catch {
+			throw new BadRequestException(`Invalid amount: ${body.amount}`)
+		}
 		try {
 			const bet: Bet = await this.commandBus.execute(
 				new PlaceBetCommand(
 					req.user.sub,
 					req.user.username ?? req.user.sub,
-					BigInt(body.amount),
+					amountCents,
 				),
 			)
 			return toBetDto(bet)

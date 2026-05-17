@@ -7,7 +7,7 @@ export const WalletSchema = defineEntity({
 	name: 'Wallet',
 	tableName: 'wallets',
 	properties: (p) => ({
-		id: p.uuid().primary(),
+		id: p.uuid().primary().onCreate(() => randomUUID()),
 		playerId: p.string(),
 		balance: p.type(BigIntType).onCreate(() => 0n),
 		createdAt: p.datetime().onCreate(() => new Date()),

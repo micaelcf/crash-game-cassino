@@ -2,7 +2,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Wallet } from '../../../domain/wallet/wallet.entity';
 import { BaseRepository } from '../../../infrastructure/db/base.repository';
-import { GetWalletQuery } from '../queries/get-wallet.query';
+import { GetWalletQuery } from '../dtos/get-wallet.query';
 
 @Injectable()
 export class GetWalletUseCase {

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common'
 import { Bet, BetStatus } from '../../../domain/bet/bet.entity'
 import { BaseRepository } from '../../../infrastructure/db/base.repository'
 import { InboxEvent } from '../../../infrastructure/messaging/inbox/inbox-event.entity'
-import { WalletDebitedCommand } from '../commands/wallet-debited.command'
+import { WalletDebitedCommand } from '../dtos/wallet-debited.command'
 
 @Injectable()
 export class WalletDebitedUseCase {

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { type MikroORM, RequestContext } from '@mikro-orm/core'
+import { MikroORM, RequestContext } from '@mikro-orm/core'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import {
 	Inject,
@@ -108,7 +108,13 @@ export class RoundOrchestrator implements OnModuleInit, OnModuleDestroy {
 
 	private async startFlight(roundId: string): Promise<void> {
 		const round = await this.rounds.findOne({ id: roundId })
-		if (!round || round.status !== RoundStatus.BETTING_PHASE) return
+		if (!round || round.status !== RoundStatus.BETTING_PHASE) {
+			this.schedule(
+				() => this.openBettingPhase(),
+				this.config.interRoundGapMs,
+			)
+			return
+		}
 		const now = new Date()
 		round.startFlight(now)
 		await this.rounds.flush()
@@ -129,7 +135,13 @@ export class RoundOrchestrator implements OnModuleInit, OnModuleDestroy {
 
 	private async crashRound(roundId: string): Promise<void> {
 		const round = await this.rounds.findOne({ id: roundId })
-		if (!round || round.status !== RoundStatus.FLYING) return
+		if (!round || round.status !== RoundStatus.FLYING) {
+			this.schedule(
+				() => this.openBettingPhase(),
+				this.config.interRoundGapMs,
+			)
+			return
+		}
 		const now = new Date()
 		const serverSeed = this.seedCache.get(round.id) ?? ''
 		round.crash(now, serverSeed)

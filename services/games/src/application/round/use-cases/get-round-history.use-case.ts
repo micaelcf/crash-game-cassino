@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common'
 import { Round, RoundStatus } from '../../../domain/round/round.entity'
 import { BaseRepository } from '../../../infrastructure/db/base.repository'
 import type { PagedResult } from '../../shared/paged-result'
-import { type RoundView, roundToView } from '../dtos/round-view.dto'
-import type { GetRoundHistoryQuery } from '../queries/get-round-history.query'
+import { type RoundDto, toRoundDto } from '../dtos/round.dto'
+import type { GetRoundHistoryQuery } from '../dtos/get-round-history.query'
 
 @Injectable()
 export class GetRoundHistoryUseCase {
@@ -13,7 +13,7 @@ export class GetRoundHistoryUseCase {
 		private readonly rounds: BaseRepository<Round>,
 	) {}
 
-	async execute(query: GetRoundHistoryQuery): Promise<PagedResult<RoundView>> {
+	async execute(query: GetRoundHistoryQuery): Promise<PagedResult<RoundDto>> {
 		const [rounds, total] = await this.rounds.findAndCount(
 			{ status: RoundStatus.CRASHED },
 			{
@@ -23,7 +23,7 @@ export class GetRoundHistoryUseCase {
 			},
 		)
 		return {
-			items: rounds.map((r) => roundToView(r, [])),
+			items: rounds.map((r) => toRoundDto(r, [])),
 			page: query.page,
 			pageSize: query.pageSize,
 			total,

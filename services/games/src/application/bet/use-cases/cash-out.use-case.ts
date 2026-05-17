@@ -7,7 +7,7 @@ import { RoundNotFlyingException } from '../../../domain/round/round.exceptions'
 import { CLOCK, type Clock } from '../../../domain/shared/clock'
 import { BaseRepository } from '../../../infrastructure/db/base.repository'
 import { EventPublisher } from '../../../infrastructure/messaging/outbox/event-publisher.service'
-import { CashOutCommand } from '../commands/cash-out.command'
+import { CashOutCommand } from '../dtos/cash-out.command'
 
 @Injectable()
 export class CashOutUseCase {
@@ -21,10 +21,10 @@ export class CashOutUseCase {
 	) {}
 
 	async execute(command: CashOutCommand): Promise<Bet> {
-		const round = await this.rounds.findOne(
-			{},
-			{ orderBy: { createdAt: 'desc' } },
-		)
+		const [round] = await this.rounds.findAll({
+			orderBy: { createdAt: 'desc' },
+			limit: 1,
+		})
 
 		if (!round) throw new RoundNotFlyingException()
 		if (round.status !== RoundStatus.FLYING) {

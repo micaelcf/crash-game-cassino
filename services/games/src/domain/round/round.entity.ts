@@ -24,7 +24,7 @@ export const RoundSchema = defineEntity({
 	name: 'Round',
 	tableName: 'rounds',
 	properties: (p) => ({
-		id: p.uuid().primary(),
+		id: p.uuid().primary().onCreate(() => randomUUID()),
 		nonce: p.integer(),
 		serverSeedHash: p.string(),
 		serverSeed: p.string().nullable(),

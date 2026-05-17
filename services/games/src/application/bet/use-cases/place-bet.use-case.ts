@@ -7,10 +7,10 @@ import {
 } from '../../../domain/bet/bet.exceptions'
 import { Round, RoundStatus } from '../../../domain/round/round.entity'
 import { RoundNotBettingException } from '../../../domain/round/round.exceptions'
-import { BaseRepository } from '../../../infrastructure/db/base.repository'
+import type { BaseRepository } from '../../../infrastructure/db/base.repository'
 import { EventPublisher } from '../../../infrastructure/messaging/outbox/event-publisher.service'
 import { MAX_BET_CENTS, MIN_BET_CENTS } from '../../bet-limits'
-import { PlaceBetCommand } from '../commands/place-bet.command'
+import type { PlaceBetCommand } from '../dtos/place-bet.command'
 
 @Injectable()
 export class PlaceBetUseCase {
@@ -34,10 +34,10 @@ export class PlaceBetUseCase {
 			)
 		}
 
-		const round = await this.rounds.findOne(
-			{},
-			{ orderBy: { createdAt: 'desc' } },
-		)
+		const [round] = await this.rounds.findAll({
+			orderBy: { createdAt: 'desc' },
+			limit: 1,
+		})
 
 		if (!round) {
 			throw new Error('No active round available for betting')

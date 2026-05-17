@@ -5,7 +5,7 @@ import { Wallet } from '../../../domain/wallet/wallet.entity';
 import { InboxEvent } from '../../../infrastructure/messaging/inbox/inbox-event.entity';
 import { EventPublisher } from '../../../infrastructure/messaging/outbox/event-publisher.service';
 import { BaseRepository } from '../../../infrastructure/db/base.repository';
-import { DebitWalletCommand } from '../commands/debit-wallet.command';
+import { DebitWalletCommand } from '../dtos/debit-wallet.command';
 
 @Injectable()
 export class DebitWalletUseCase {

@@ -5,7 +5,7 @@ import {
 	type RoundVerification,
 } from '../../../domain/round/round.entity'
 import { BaseRepository } from '../../../infrastructure/db/base.repository'
-import { GetRoundVerifyQuery } from '../queries/get-round-verify.query'
+import { GetRoundVerifyQuery } from '../dtos/get-round-verify.query'
 
 @Injectable()
 export class GetRoundVerifyUseCase {
