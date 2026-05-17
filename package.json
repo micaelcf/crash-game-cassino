@@ -3,9 +3,9 @@
 	"private": true,
 	"workspaces": ["services/*", "packages/*", "frontend"],
 	"scripts": {
-		"docker:up": "docker compose up",
-		"docker:down": "docker compose down",
-		"docker:prune": "docker compose down -v --rmi all --remove-orphans && docker volume prune -f"
+		"docker:up": "podman compose up",
+		"docker:down": "podman compose down",
+		"docker:prune": "podman compose down -v --rmi all --remove-orphans && podman volume prune -f"
 	},
 	"devDependencies": {
 		"bun-types": "latest"

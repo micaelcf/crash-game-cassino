@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # Creates additional databases from POSTGRES_EXTRA_DATABASES (comma-separated).
@@ -6,13 +6,16 @@ set -e
 # Example: POSTGRES_EXTRA_DATABASES=games,wallets
 
 if [ -n "$POSTGRES_EXTRA_DATABASES" ]; then
-  IFS=',' read -ra DATABASES <<< "$POSTGRES_EXTRA_DATABASES"
-  for db in "${DATABASES[@]}"; do
-    db=$(echo "$db" | xargs) # trim whitespace
+  IFS=','
+  for db in $POSTGRES_EXTRA_DATABASES; do
+    db=$(echo "$db" | tr -d '[:space:]')
+    [ -z "$db" ] && continue
     echo "Creating database: $db"
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-      SELECT 'CREATE DATABASE "$db"'
-      WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$db')\gexec
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+      -v dbname="$db" \
+      <<-'EOSQL'
+        SELECT format('CREATE DATABASE %I', :'dbname')
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'dbname')\gexec
 EOSQL
     echo "Database '$db' created (or already exists)."
   done
