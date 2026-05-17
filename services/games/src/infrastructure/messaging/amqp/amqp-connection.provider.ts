@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import amqpManager, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import type { Channel, ConfirmChannel } from 'amqplib';
 import { RabbitPublisher } from './rabbit-publisher';
-import { declareTopology, RabbitTopology } from './topology';
+import { declareTopology, type RabbitTopology } from './topology';
 
 @Injectable()
 export class AmqpConnection implements RabbitPublisher, OnModuleInit, OnModuleDestroy {
