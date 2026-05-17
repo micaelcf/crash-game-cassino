@@ -1,26 +1,44 @@
-# Backend Patterns
+# Backend patterns
 
-Padrões adotados nos serviços NestJS.
+These are the patterns adopted in the NestJS services.
 
-## 1. CQRS Simplificado (Command Query Responsibility Segregation)
+## 1. Simplified CQRS (Command Query Responsibility Segregation)
 
-- O fluxo de escrita (ex: `PlaceBetCommand`, `CashOutCommand`) é tratado de forma transacional.
-- O fluxo de leitura (ex: `GetRoundHistoryQuery`) é direto para o repositório, não precisa passar pelo núcleo pesado de entidades de domínio. O NestJS `@nestjs/cqrs` é recomendado.
+- You must handle the write flow, such as `PlaceBetCommand` and `CashOutCommand`,
+  transactionally.
+- The read flow, such as `GetRoundHistoryQuery`, goes directly to the repository.
+  It does not need to pass through the heavy core of domain entities. We recommend
+  using `@nestjs/cqrs`.
 
-## 2. Rich Domain Models (Entidades Ricas)
+## 2. Rich domain models
 
-Não use modelos anêmicos. Entidades do MikroORM não devem ser apenas "sacos de getters e setters".
-A lógica, como `round.placeBet(player, amount)`, deve residir dentro da própria classe `Round`. A entidade deve lançar erros de domínio se as regras forem violadas (ex: `RoundAlreadyStartedException`).
+Do not use anemic models. MikroORM entities must not be just bags of getters and
+setters.
+You must place the logic, such as `round.placeBet(player, amount)`, inside the
+`Round` class itself. The entity must throw domain errors if the rules are
+violated, for example, `RoundAlreadyStartedException`.
 
-## 3. Padrão Outbox Transacional (Sagas / Coreografia)
+## 3. Transactional outbox and inbox
 
-Ao concluir uma rodada, não envie mensagens para o RabbitMQ no meio de um processo.
+When you conclude a round, do not send messages to RabbitMQ in the middle of a
+process.
 
-1. Salve o estado no banco de dados dentro de uma transação.
-2. Na mesma transação, grave o evento numa tabela auxiliar (Outbox).
-3. Um processo de background faz _polling_ ou ouve o _commit_ da tabela Outbox e publica a mensagem no RabbitMQ de forma confiável.
-   Isso previne o erro comum: Mensagem enviada para a fila, mas a transação no banco principal faz _rollback_ em seguida.
+1. Save the state in the database within a transaction.
+2. In the same transaction, record the event in an auxiliary table, usually
+   called an outbox.
+3. A background process polls or listens to the commit of the outbox table and
+   reliably publishes the message to RabbitMQ.
+   This prevents a common error where the system sends the message to the queue,
+   but the main database transaction rolls back immediately after.
 
-## 4. DTOs Rígidos e Validação
+On the consumer side, an **inbox** table records every processed event ID
+inside the same transaction as the side effect. A duplicate delivery is
+detected on the unique constraint and skipped. Together, outbox plus inbox give
+you at-least-once delivery on the wire and exactly-once processing at the
+business layer — the bonus criterion called out by the challenge.
 
-Todo input na Controller (`presentation/`) passa pelo `class-validator` e `class-transformer`. Rejeite (HTTP 400) payloads não mapeados (`whitelist: true`).
+## 4. Rigid DTOs and validation
+
+Every input in the controller must pass through `class-validator` and
+`class-transformer`. You must reject unmapped payloads with an HTTP 400 error by
+using `whitelist: true`.

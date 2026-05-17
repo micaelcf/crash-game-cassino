@@ -1,24 +1,40 @@
-# Backend Anti-Patterns
+# Backend anti-patterns
 
-Ações e arquiteturas que **invalidarão imediatamente** a solução.
+These are actions and architectures that immediately invalidate the solution.
 
-## 1. Uso de Floats/Decimais em Variáveis de Linguagem (PONTO FLUTUANTE É PROIBIDO)
+## 1. Using floating-point numbers in language variables
 
-**O que não fazer**: `const betAmount: number = 10.50;`
-A aritmética de precisão de JavaScript (IEEE 754) gera coisas como `0.1 + 0.2 = 0.30000000000000004`.
-**Regra**: Valores em banco e em código são inteiros (centavos). 10 Reais = `1000`. Utilize divisões apenas para apresentação na UI.
+**What not to do**: `const betAmount: number = 10.50;`
+JavaScript precision arithmetic (IEEE 754) generates results such as
+`0.1 + 0.2 = 0.30000000000000004`.
 
-## 2. Modelos de Domínio Anêmicos
+**Rule**: The system must treat all values in the database and in code as
+integers representing cents. For example, `R$ 10.50` equals `1050` and the
+maximum bet `R$ 1,000.00` equals `100000`. Only use divisions for presentation
+in the UI. **Floating-point numbers are prohibited.** The challenge lists
+floating-point arithmetic for money as an immediate-disqualification offence.
 
-**O que não fazer**: Criar lógicas de jogo espalhadas inteiramente num `GameService.ts` com 2000 linhas, usando `Round.ts` apenas para conter `id, status, multiplier`.
-**Regra**: Centralize o invariante na Entidade. Exemplo, a transição para `CRASHED` pertence ao método `round.crash()`.
+## 2. Anemic domain models
 
-## 3. Comunicação Direta entre Base de Dados de Serviços Distintos
+**What not to do**: Create game logic entirely scattered across a 2000-line
+`GameService.ts` file, using `Round.ts` just to hold `id, status, multiplier`.
 
-**O que não fazer**: O Game Service fazer `SELECT * FROM wallets.users`.
-**Regra**: O Game e a Wallet estão separados (DBs separados). A comunicação é feita através do API Gateway (se síncrona/query) ou via RabbitMQ (Eventos).
+**Rule**: Centralize the invariants in the entity. For example, the transition
+to the `CRASHED` state belongs to the `round.crash()` method.
 
-## 4. Assunções Inseguras sobre o Ambiente
+## 3. Direct communication between databases of different services
 
-**O que não fazer**: Não considerar "Race Conditions" na hora do "Cash Out" (ex: dois requests na mesma fração de segundo para apostar/sacar com a mesma aposta).
-**Regra**: Proteja ações de mutação de saldo ou status de aposta via controle de concorrência optimista ou _locks_ transacionais (ex: `mikro-orm` lock).
+**What not to do**: The Game Service executes `SELECT * FROM wallets.users`.
+
+**Rule**: The Game and Wallet services are separate, with separate databases.
+Communication happens through the API Gateway for synchronous queries or via
+RabbitMQ for events.
+
+## 4. Unsafe assumptions about the environment
+
+**What not to do**: Ignore race conditions during a cash out, for example, two
+requests in the same fraction of a second to bet or cash out with the same bet.
+
+**Rule**: Protect actions that mutate the balance or the bet status by using
+optimistic concurrency control or transactional locks, for example, using
+the `mikro-orm` lock.

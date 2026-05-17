@@ -1,17 +1,19 @@
-# Arquitetura do Projeto
+# Project architecture
 
-A arquitetura do Crash Game segue os princípios de **Microsserviços** e **Domain-Driven Design (DDD)**. Os serviços são isolados, escaláveis e se comunicam tanto de forma síncrona quanto assíncrona.
+The Crash Game architecture follows the principles of microservices and
+Domain-Driven Design (DDD). The services are isolated, scalable, and
+communicate both synchronously and asynchronously.
 
-## Visão Geral da Topologia
+## Topology overview
 
 ```mermaid
 graph TD
-    Client[Frontend TanStack Start] -->|HTTP REST| API_Gateway
+    Client["Frontend (TanStack Start)"] -->|HTTP REST| API_Gateway
     Client -->|WebSocket| API_Gateway
 
-    subgraph Infraestrutura Edge
-        API_Gateway[Kong API Gateway]
-        IdP[Logto Identity Provider]
+    subgraph Edge Infrastructure
+        API_Gateway["Kong API Gateway"]
+        IdP["Logto Identity Provider"]
     end
 
     API_Gateway -->|REST /games| Game_Service
@@ -22,53 +24,88 @@ graph TD
     API_Gateway -.->|Token Validation| IdP
 
     subgraph Backend Services
-        Game_Service[Game Service - NestJS]
-        Wallet_Service[Wallet Service - NestJS]
+        Game_Service["Game Service (NestJS)"]
+        Wallet_Service["Wallet Service (NestJS)"]
     end
 
     subgraph Persistence Layer
-        DB_Games[(PostgreSQL - Games DB)]
-        DB_Wallets[(PostgreSQL - Wallets DB)]
+        DB_Games[("PostgreSQL (Games DB)")]
+        DB_Wallets[("PostgreSQL (Wallets DB)")]
         Game_Service --> DB_Games
         Wallet_Service --> DB_Wallets
     end
 
     subgraph Message Broker
-        RMQ[RabbitMQ]
-        Game_Service <-->|Pub/Sub Eventos| RMQ
-        Wallet_Service <-->|Pub/Sub Eventos| RMQ
+        RMQ["RabbitMQ"]
+        Game_Service <-->|Pub/Sub Events| RMQ
+        Wallet_Service <-->|Pub/Sub Events| RMQ
     end
 ```
 
-## Bounded Contexts
+## Bounded contexts
 
-### 1. Game Service
+### 1. Game service
 
-Responsável pelo motor (engine) do jogo.
+This service is responsible for the game engine.
 
-- **Domínio**: Rounds (Rodadas), Bets (Apostas), Crash Points, Algoritmo Provably Fair.
-- **Responsabilidades**: Gerenciar o ciclo de vida da rodada (Aguardando, Voando, Crashado), aceitar apostas (verificando saldo assincronamente ou de forma eventual), calcular cash outs e enviar atualizações em tempo real para os clientes (WebSockets).
+- **Domain**: Rounds, Bets, Crash points, Provably fair algorithm.
+- **Responsibilities**: Manage the round life cycle (waiting, flying, crashed),
+  accept bets (verifying the balance asynchronously or eventually), calculate
+  cash outs, and send real-time updates to the clients via WebSockets.
 
-### 2. Wallet Service
+### 2. Wallet service
 
-Responsável pelo controle transacional de fundos dos jogadores.
+This service is responsible for the transactional control of the players' funds.
 
-- **Domínio**: Wallets (Carteiras), Transactions (Débitos, Créditos).
-- **Responsabilidades**: Manter saldo, processar débitos (apostas) e créditos (saques/vitórias). **Regra de Ouro**: Valores monetários manipulados estritamente como inteiros (`BIGINT`) representando centavos.
+- **Domain**: Wallets, Transactions (debits, credits).
+- **Responsibilities**: Maintain the balance and process debits (bets) and
+  credits (withdrawals and wins). **Golden rule**: Handle monetary values
+  strictly as integers (`BIGINT`) representing cents.
 
-## Fluxo de Comunicação (Síncrono vs Assíncrono)
+## Communication flow
 
-- **Síncrono (REST)**: Consultas (queries) do frontend, como buscar saldo, histórico de rodadas e criação de carteira. Autenticação e validação no Gateway (Kong).
-- **Assíncrono (Event-Driven)**: Processos transacionais.
-  - Quando um usuário faz uma aposta (REST no Game Service), o Game Service emite um evento `BetPlaced`.
-  - O Wallet Service consome, debita o saldo (ou rejeita se insuficiente) e emite `WalletDebited` ou `WalletDebitFailed`.
-  - O Game Service compensa a ação caso falhe.
+- **Synchronous (REST)**: Frontend queries, such as fetching the balance,
+  fetching the round history, and creating a wallet. Kong handles
+  authentication and validation at the gateway. Wallet credit and debit are
+  **never** exposed over REST.
+- **Asynchronous (event-driven)**: Transactional processes between Game and
+  Wallet flow only through RabbitMQ.
+  - When a user places a bet via a REST request to the Game Service, the Game
+    Service persists the bet as `PENDING` and emits a `BetPlaced` event.
+  - The Wallet Service consumes the event, debits the balance (or rejects it if
+    insufficient), and emits a `WalletDebited` or `WalletDebitFailed` event.
+  - The Game Service compensates for the action if it fails: the bet
+    transitions to `CANCELLED`.
+  - On cash out, the Game Service emits `PlayerWon`; the Wallet Service credits
+    the payout.
 
-## Stack Tecnológica Decidida
+Event publication must use the **transactional outbox** pattern so a message
+is never published without its state change being committed first (see
+[patterns/backend.md](./patterns/backend.md)). Consumers must be idempotent —
+duplicate deliveries are expected.
 
-- **Runtime/Package Manager**: Bun
-- **Framework Web Backend**: NestJS (com MikroORM para persistência)
-- **Framework Web Frontend**: TanStack Start (SSR/SPA híbrido)
-- **API Gateway**: Kong
-- **Autenticação**: Logto (OpenID Connect)
-- **Broker de Mensagens**: RabbitMQ
+## Infrastructure topology
+
+| Service        | Direct port | Through Kong                      |
+| -------------- | ----------- | --------------------------------- |
+| Frontend       | `3000`      | —                                 |
+| Game Service   | `4001`      | `http://localhost:8000/games/*`   |
+| Wallet Service | `4002`      | `http://localhost:8000/wallets/*` |
+| Kong proxy     | `8000`      | —                                 |
+| Kong admin     | `8001`      | —                                 |
+| PostgreSQL     | `5432`      | databases: `games`, `wallets`     |
+| RabbitMQ AMQP  | `5672`      | management UI on `15672`          |
+
+`bun run docker:up` must bring everything up with no manual steps: Logto
+realm/tenant import, Kong declarative config, and database migrations all run
+as part of the compose lifecycle.
+
+## Technology stack
+
+- **Runtime and package manager**: Bun
+- **Backend web framework**: NestJS with MikroORM for persistence
+- **Frontend web framework**: TanStack Start (hybrid SSR/SPA)
+- **API gateway**: Kong
+- **Authentication**: Logto (OpenID Connect) — replaces the Keycloak default
+  from the challenge spec under the same OIDC contract
+- **Message broker**: RabbitMQ

@@ -1,22 +1,33 @@
-# Frontend Patterns
+# Frontend patterns
 
-Padrões de projeto e organização recomendados para o Frontend TanStack Start.
+These are the recommended design and organization patterns for the TanStack Start
+frontend.
 
-## 1. Padrão de Container e Apresentação (Componentes)
+## 1. Container and presentation pattern
 
-Mantenha os componentes UI burros (apresentacionais). A injeção de estado complexo (Zustand, Queries) deve ser feita num nível mais alto das páginas (ou rotas do TanStack Router) ou em Custom Hooks específicos (ex: `useGameState`).
+Keep the UI components dumb and presentational. You must inject complex state,
+like Zustand or queries, at a higher level in the pages, in the TanStack Router
+routes, or in specific custom hooks, for example, `useGameState`.
 
-## 2. Server State vs Client State
+## 2. Server state vs client state
 
-- **Server State**: Tudo o que pertence à base de dados (ex: Histórico de Rodadas, Perfil do Usuário, Saldo Atual) é gerido pelo `@tanstack/react-query`.
-- **Client State**: Dados efémeros (ex: modal aberto, input de aposta em curso, posição atual do multiplicador) são geridos por Zustand ou Context.
+- **Server state**: The `@tanstack/react-query` package manages everything that
+  belongs to the database, such as the round history, the user profile, and the
+  current balance.
+- **Client state**: Zustand or the Context API manages ephemeral data, such as
+  an open modal, an ongoing bet input, or the current position of the multiplier.
 
-## 3. WebSocket como "Event Source", não "State Master"
+## 3. WebSocket as an event source
 
-A stream de WebSocket atualiza os caches locais (React Query) ou Zustand.
-Exemplo: Ao receber um socket `RoundStarted`, atualize o `queryClient.setQueryData(['currentRound'], ...)` em vez de guardar a rodada duplicada num estado do Zustand. Isso mantém uma "Single Source of Truth".
+The WebSocket stream updates the local caches in React Query or Zustand.
+For example, when you receive a `RoundStarted` socket event, update the query
+data with `queryClient.setQueryData(['currentRound'], ...)`. Do not save the
+duplicated round in a Zustand state. This maintains a single source of truth.
 
-## 4. Animações Híbridas (Framer Motion / Canvas)
+## 4. Hybrid animations
 
-- Para a UI em geral (modais, listas, botões), utilize **Framer Motion**.
-- Para o gráfico de Crash (a curva), que precisa ser desenhada a ~60fps continuadamente: evite amarrar as coordenadas a variáveis reativas do React. Mude o CSS _transform_ ou desenhe num `<canvas>` via uma referência (`useRef`) diretamente com `requestAnimationFrame`.
+- Use **Framer Motion** for the general UI, such as modals, lists, and buttons.
+- For the crash graph curve, which you need to draw at roughly 60 FPS continuously:
+  avoid tying the coordinates to reactive React variables. Change the CSS transform
+  or draw on a `<canvas>` via a reference (`useRef`) directly with
+  `requestAnimationFrame`.

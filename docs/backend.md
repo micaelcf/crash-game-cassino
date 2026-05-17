@@ -1,18 +1,26 @@
-# Backend Guidelines
+# Backend guidelines
 
-Os serviços backend (`Game` e `Wallet`) são os motores do sistema. Eles devem ser escaláveis, imunes a condições de corrida e extremamente rigorosos com precisão financeira.
+The backend services (`Game` and `Wallet`) are the engines of the system.
+You must build them to be scalable, immune to race conditions, and extremely
+strict with financial precision.
 
-## Stack
+## Technology stack
 
-- **Framework**: NestJS
-- **ORM**: MikroORM (PostgreSQL)
+- **Framework**: NestJS (TypeScript strict mode)
+- **ORM**: MikroORM (PostgreSQL). The challenge also accepts Prisma or TypeORM
+  if you prefer a different ORM in a future iteration.
 - **Runtime**: Bun
-- **Broker**: RabbitMQ
-- **Sockets**: `@nestjs/websockets` + `socket.io`
+- **Broker**: RabbitMQ. Kafka and AWS SQS (via LocalStack) are accepted
+  alternatives by the challenge.
+- **Sockets**: `@nestjs/websockets` and `socket.io`. Use `ws` only if your
+  client deliberately avoids the Socket.IO protocol.
+- **API docs**: `@nestjs/swagger` exposed per service.
+- **Tests**: Bun test runner; Vitest is also acceptable.
 
-## Estrutura (Domain-Driven Design)
+## Domain-Driven Design structure
 
-Ambos os serviços, `Game` e `Wallet`, seguem uma organização em camadas (DDD simplificado para microsserviços NestJS):
+Both the `Game` and `Wallet` services follow a layered organization, which
+is a simplified DDD for NestJS microservices:
 
 ```text
 src/
@@ -22,17 +30,39 @@ src/
 └── presentation/      # REST Controllers, WebSocket Gateways, Broker Consumers
 ```
 
-## Diretrizes de Implementação
+Each service ships with a `tests/` directory split into `unit/` and `e2e/`
+folders. Shared utilities between services live under the monorepo root
+`packages/` (for example, `@crash/eslint`).
 
-1. **Separação de Preocupações**: Controladores (Presentation) não contêm regras de negócios. Eles apenas convertem DTOs, validam o input e despacham comandos para o _Application Layer_ (CQRS).
-2. **Precisão Monetária**:
-   - **Banco de Dados**: Sempre `BIGINT` (se PostgreSQL) ou `numeric`.
-   - **TypeScript**: Use inteiros puros (`number` mas tratado como int ou biblioteca como `big.js`/`decimal.js`).
-   - Um valor de R$ 10,50 é armazenado e manipulado como `1050`. A formatação só ocorre no Frontend.
-3. **Idempotência e Eventos**:
-   - A comunicação via RabbitMQ **DEVE** tratar eventos duplicados de forma idempotente. A mesma transação processada duas vezes não deve creditar/debitar o dobro.
-   - Use uma tabela de _Inbox/Outbox_ ou garanta que os Handlers registrem o ID do evento para prevenir reprocessamento.
-4. **Tratamento de Socket**:
-   - WebSockets no NestJS usam _Gateways_.
-   - Mantenha os payloads compactos (apenas o que o cliente precisa).
-   - Somente eventos de "Push" (Server to Client). Ações dos jogadores (Bet/Cashout) devem vir por REST (Kong).
+## Implementation guidelines
+
+1. **Separation of concerns**: Controllers in the presentation layer must not
+   contain business rules. They only convert DTOs, validate the input, and
+   dispatch commands to the application layer via CQRS.
+2. **Monetary precision**:
+   - **Database**: Always use `BIGINT` (in PostgreSQL) or `numeric`.
+   - **TypeScript**: Use pure integers (a `number` treated as an integer, or
+     libraries like `big.js` or `decimal.js`).
+   - For example, you must store and manipulate a value of R$ 10.50 as `1050`.
+     You only format the value in the frontend.
+3. **Idempotency and events**:
+   - You must handle duplicate events from RabbitMQ idempotently. Processing
+     the same transaction twice must not credit or debit the amount twice.
+   - Use an inbox or outbox table, or ensure that the handlers register the
+     event ID to prevent reprocessing.
+4. **Socket handling**:
+   - NestJS WebSockets use gateways.
+   - Keep the payloads compact. Only send the data that the client needs.
+   - Use sockets only for push events from the server to the client. The
+     players' actions, such as betting and cashing out, must come through REST
+     via Kong.
+5. **Authentication**:
+   - Kong validates JWTs at the gateway against the Logto OIDC discovery
+     document.
+   - Backend services trust the verified `sub` claim. Never query the IdP from
+     inside a request handler.
+6. **Concurrency safety**:
+   - The wallet balance must never go negative. Protect debits with optimistic
+     concurrency or a transactional lock.
+   - The cash out path is the hottest race: two near-simultaneous requests for
+     the same bet must produce at most one `WON` transition.
