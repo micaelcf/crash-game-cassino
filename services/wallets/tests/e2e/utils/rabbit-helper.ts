@@ -27,10 +27,11 @@ export const openBrokerProbe = async (
   await declareTopology(channel, topology);
 
   await channel.assertQueue(probeQueueName, {
-    durable: false,
-    autoDelete: true,
+    durable: true,
+    autoDelete: false,
     exclusive: false,
   });
+  await channel.purgeQueue(probeQueueName);
   for (const key of routingKeys) {
     await channel.bindQueue(probeQueueName, topology.exchange, key);
   }
@@ -56,11 +57,17 @@ export const publishEvent = async (
   payload: unknown,
   messageId: string = randomUUID(),
 ): Promise<string> => {
-  channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(payload)), {
-    contentType: 'application/json',
-    persistent: true,
-    messageId,
-  });
+  const envelope = { pattern: routingKey, data: payload };
+  channel.publish(
+    exchange,
+    routingKey,
+    Buffer.from(JSON.stringify(envelope)),
+    {
+      contentType: 'application/json',
+      persistent: true,
+      messageId,
+    },
+  );
   return messageId;
 };
 
@@ -96,7 +103,11 @@ export const waitForEvent = async (
         async (msg) => {
           if (!msg) return;
           try {
-            const payload = JSON.parse(msg.content.toString());
+            const body = JSON.parse(msg.content.toString());
+            const payload =
+              body && typeof body === 'object' && 'data' in body
+                ? body.data
+                : body;
             const captured: CapturedMessage = {
               routingKey: msg.fields.routingKey,
               messageId: msg.properties.messageId ?? '',

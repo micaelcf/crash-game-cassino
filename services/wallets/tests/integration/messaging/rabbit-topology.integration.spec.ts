@@ -6,9 +6,9 @@ import {
   WALLETS_TOPOLOGY,
 } from '../../../src/infrastructure/messaging/amqp/topology';
 
-const dockerAvailable = !!process.env.DOCKER_HOST;
+const skipIntegration = process.env.SKIP_INTEGRATION === '1';
 
-describe.skipIf(!dockerAvailable)('rabbit topology', () => {
+describe.skipIf(skipIntegration)('rabbit topology', () => {
   let rabbit: RabbitHandle;
 
   beforeAll(async () => {

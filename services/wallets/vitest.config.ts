@@ -22,6 +22,9 @@ export default defineConfig({
 		include: ['src/**/*.spec.ts', 'tests/**/*.spec.ts'],
 		pool: 'forks',
 		forks: { singleFork: true },
+		fileParallelism: false,
+		testTimeout: 15_000,
+		hookTimeout: 60_000,
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'html'],

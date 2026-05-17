@@ -1,72 +1,49 @@
-import 'reflect-metadata';
-import {
-  GenericContainer,
-  StartedTestContainer,
-  Wait,
-} from 'testcontainers';
-
 export interface RabbitHandle {
-  url: string;
-  managementUrl: string;
-  username: string;
-  password: string;
-  container: StartedTestContainer;
+	url: string
+	managementUrl: string
+	username: string
+	password: string
+	container: null
 }
 
 export interface PgHandle {
-  url: string;
-  container: StartedTestContainer;
+	url: string
+	container: null
+}
+
+const DEFAULT_PG_URL =
+	process.env.TEST_DATABASE_URL_WALLETS ||
+	process.env.TEST_DATABASE_URL ||
+	'postgresql://admin:admin@127.0.0.1:5433/wallets_test'
+
+const DEFAULT_RABBIT_USER = process.env.TEST_RABBITMQ_USER || 'admin'
+const DEFAULT_RABBIT_PASS = process.env.TEST_RABBITMQ_PASSWORD || 'admin'
+const DEFAULT_RABBIT_HOST = process.env.TEST_RABBITMQ_HOST || '127.0.0.1'
+const DEFAULT_RABBIT_AMQP_PORT = process.env.TEST_RABBITMQ_AMQP_PORT || '5673'
+const DEFAULT_RABBIT_MGMT_PORT = process.env.TEST_RABBITMQ_MGMT_PORT || '15673'
+const DEFAULT_RABBIT_URL =
+	process.env.TEST_RABBITMQ_URL ||
+	`amqp://${DEFAULT_RABBIT_USER}:${DEFAULT_RABBIT_PASS}@${DEFAULT_RABBIT_HOST}:${DEFAULT_RABBIT_AMQP_PORT}`
+const DEFAULT_RABBIT_MGMT_URL =
+	process.env.TEST_RABBITMQ_MANAGEMENT_URL ||
+	`http://${DEFAULT_RABBIT_HOST}:${DEFAULT_RABBIT_MGMT_PORT}`
+
+export const startPostgres = async (): Promise<PgHandle> => {
+	return { url: DEFAULT_PG_URL, container: null }
 }
 
 export const startRabbit = async (): Promise<RabbitHandle> => {
-  const username = 'admin';
-  const password = 'admin';
-  const container = await new GenericContainer(
-    'rabbitmq:4.2.4-management-alpine',
-  )
-    .withEnvironment({
-      RABBITMQ_DEFAULT_USER: username,
-      RABBITMQ_DEFAULT_PASS: password,
-    })
-    .withExposedPorts(5672, 15672)
-    .withWaitStrategy(Wait.forLogMessage(/Server startup complete/))
-    .withStartupTimeout(120_000)
-    .start();
+	return {
+		url: DEFAULT_RABBIT_URL,
+		managementUrl: DEFAULT_RABBIT_MGMT_URL,
+		username: DEFAULT_RABBIT_USER,
+		password: DEFAULT_RABBIT_PASS,
+		container: null,
+	}
+}
 
-  return {
-    url: `amqp://${username}:${password}@${container.getHost()}:${container.getMappedPort(5672)}`,
-    managementUrl: `http://${container.getHost()}:${container.getMappedPort(15672)}`,
-    username,
-    password,
-    container,
-  };
-};
-
-export const startPostgres = async (): Promise<PgHandle> => {
-  const container = await new GenericContainer('postgres:18.3-alpine')
-    .withEnvironment({
-      POSTGRES_USER: 'admin',
-      POSTGRES_PASSWORD: 'admin',
-      POSTGRES_DB: 'test',
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(
-      Wait.forLogMessage(
-        /database system is ready to accept connections/,
-        2,
-      ),
-    )
-    .withStartupTimeout(120_000)
-    .start();
-
-  return {
-    url: `postgresql://admin:admin@${container.getHost()}:${container.getMappedPort(5432)}/test`,
-    container,
-  };
-};
-
-export const stopContainer = async (handle: {
-  container: StartedTestContainer;
+export const stopContainer = async (_handle: {
+	container: unknown
 }): Promise<void> => {
-  await handle.container.stop({ timeout: 10_000 });
-};
+	// No-op: infra is managed by docker compose (profile "test").
+}
