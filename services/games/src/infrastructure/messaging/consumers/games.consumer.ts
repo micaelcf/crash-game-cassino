@@ -1,3 +1,4 @@
+import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -20,24 +21,29 @@ const messageIdOf = (ctx: RmqContext, fallback: unknown): string => {
 
 @Controller()
 export class GamesConsumer {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly orm: MikroORM,
+  ) {}
 
   @EventPattern('wallet.debited')
   async onWalletDebited(@Payload() data: any, @Ctx() ctx: RmqContext) {
     const messageId = messageIdOf(ctx, data);
-    await this.commandBus.execute(
-      new WalletDebitedCommand(messageId, data.betId),
+    await RequestContext.create(this.orm.em, () =>
+      this.commandBus.execute(new WalletDebitedCommand(messageId, data.betId)),
     );
   }
 
   @EventPattern('wallet.debit_failed')
   async onWalletDebitFailed(@Payload() data: any, @Ctx() ctx: RmqContext) {
     const messageId = messageIdOf(ctx, data);
-    await this.commandBus.execute(
-      new WalletDebitFailedCommand(
-        messageId,
-        data.betId,
-        data.reason ?? 'unknown',
+    await RequestContext.create(this.orm.em, () =>
+      this.commandBus.execute(
+        new WalletDebitFailedCommand(
+          messageId,
+          data.betId,
+          data.reason ?? 'unknown',
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import { MikroORM, RequestContext } from '@mikro-orm/core';
 import { Controller } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -20,17 +21,22 @@ const messageIdOf = (ctx: RmqContext, fallback: unknown): string => {
 
 @Controller()
 export class WalletsConsumer {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly orm: MikroORM,
+  ) {}
 
   @EventPattern('bet.placed')
   async onBetPlaced(@Payload() data: any, @Ctx() ctx: RmqContext) {
     const messageId = messageIdOf(ctx, data);
-    await this.commandBus.execute(
-      new DebitWalletCommand(
-        messageId,
-        data.userId,
-        BigInt(data.betAmount ?? data.amount),
-        data.roundId,
+    await RequestContext.create(this.orm.em, () =>
+      this.commandBus.execute(
+        new DebitWalletCommand(
+          messageId,
+          data.userId,
+          BigInt(data.betAmount ?? data.amount),
+          data.roundId,
+        ),
       ),
     );
   }
@@ -38,8 +44,10 @@ export class WalletsConsumer {
   @EventPattern('player.won')
   async onPlayerWon(@Payload() data: any, @Ctx() ctx: RmqContext) {
     const messageId = messageIdOf(ctx, data);
-    await this.commandBus.execute(
-      new CreditWalletCommand(messageId, data.userId, BigInt(data.amount)),
+    await RequestContext.create(this.orm.em, () =>
+      this.commandBus.execute(
+        new CreditWalletCommand(messageId, data.userId, BigInt(data.amount)),
+      ),
     );
   }
 }

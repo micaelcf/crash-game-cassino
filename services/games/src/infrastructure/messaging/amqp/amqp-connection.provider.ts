@@ -39,10 +39,16 @@ export class AmqpConnection implements RabbitPublisher, OnModuleInit, OnModuleDe
     payload: unknown,
     options: { messageId: string; persistent?: boolean },
   ): Promise<void> {
-    await this.channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(payload)), {
-      contentType: 'application/json',
-      persistent: options.persistent ?? true,
-      messageId: options.messageId,
-    });
+    const envelope = { pattern: routingKey, data: payload };
+    await this.channel.publish(
+      exchange,
+      routingKey,
+      Buffer.from(JSON.stringify(envelope)),
+      {
+        contentType: 'application/json',
+        persistent: options.persistent ?? true,
+        messageId: options.messageId,
+      },
+    );
   }
 }
