@@ -8,6 +8,16 @@ services:
         paths:
           - /games
         strip_path: true
+      # Socket.IO transport. strip_path stays false so the upstream still sees
+      # /socket.io/* — that is the path the socket.io server listens on.
+      # Kong 3.x auto-handles the WebSocket upgrade for http/https routes.
+      - name: games-socketio
+        paths:
+          - /socket.io
+        strip_path: false
+        protocols:
+          - http
+          - https
 
   - name: wallets-service
     url: http://wallets:4002
