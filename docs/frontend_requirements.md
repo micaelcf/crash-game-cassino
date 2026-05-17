@@ -31,13 +31,13 @@
 
 | Target | URL (default dev) | Protocol | Notes |
 |---|---|---|---|
-| Kong proxy | `http://localhost:8000` | HTTP | All REST + WebSocket traffic goes through here |
+| Kong proxy | `http://localhost:8000` | HTTP | REST traffic only |
 | Game REST | `http://localhost:8000/games/*` | HTTP | |
 | Wallet REST | `http://localhost:8000/wallets/*` | HTTP | |
-| Game WebSocket | `http://localhost:8000` (Socket.IO namespace TBD by backend) | WS | Server→client only |
+| Game WebSocket | `http://localhost:4001` — Socket.IO default namespace `/`, default path `/socket.io/` | WS | Server→client only. Gateway is `@WebSocketGateway({ cors: { origin: '*' } })` — no namespace, no path override (see `services/games/src/infrastructure/websocket/game.gateway.ts`). Connect directly to the games service. If Kong is later configured to proxy WS, route `/socket.io/*` to games. |
 | Logto | OIDC discovery doc | HTTPS | Auth code + PKCE |
 
-Configure via env (already in `src/env.ts`): `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_RESOURCE` (audience for backend access token), plus add `VITE_API_BASE_URL` (Kong), `VITE_WS_URL` (Kong / Game service WS path).
+Configure via env (already in `src/env.ts`): `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_RESOURCE` (audience for backend access token), plus add `VITE_API_BASE_URL` (Kong), `VITE_WS_URL` (Game service Socket.IO origin — e.g. `http://localhost:4001`).
 
 ---
 
@@ -55,6 +55,7 @@ Configure via env (already in `src/env.ts`): `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_
    - WebSocket: pass token in the Socket.IO `auth` handshake payload (`{ auth: { token } }`). Re-handshake when the token rotates.
 5. Refresh: rely on `@logto/react`'s silent refresh. If `getAccessToken` throws, treat as unauthenticated and prompt re-login.
 6. Routes that need auth: `/dashboard`, `/game` (and any sub-routes), `/history/me`. Routes that are public: `/`, `/login`, `/callback`, `/history` (global round history).
+7. **No RBAC for now** — challenge does not require role/permission checks. A valid Logto session is the only authorization gate; backend trusts the JWT `sub` to scope per-user data. If RBAC is introduced later, add scope checks via `getAccessTokenClaims().scope`.
 
 ---
 
@@ -82,7 +83,12 @@ All calls go through Kong. Use TanStack Query for every server-state read; mutat
 | POST | `/games/bet` | yes | Place bet during `BETTING_PHASE` |
 | POST | `/games/bet/cashout` | yes | Cash out during `FLYING` |
 
-**Money on the wire:** the backend uses integer cents (`BIGINT`). The frontend MUST send and receive amounts as integers (or strings if the API picks string-encoded big integers). Convert to/from a human display value only at the rendering boundary.
+**Money on the wire (confirmed against backend DTOs):**
+
+- **Cent amounts** (`amountCents`, `payoutCents`, balance) are serialized as **string** of integer cents — the backend persists as `BIGINT` and emits as `string` (see `services/games/src/infrastructure/websocket/game.gateway.interface.ts`). Parse to `bigint` or `number` at the API boundary. For display, convert to major units only at the rendering layer.
+- **Multipliers and crash points** (`crashPointHundredths`, `multiplierHundredths`) are serialized as **integer hundredths** — e.g. `2.34x` is sent as `234`. Divide by `100` for display only.
+- The bet input accepts a user-friendly masked decimal (e.g. `1.234,56`) and converts to integer cents at submit time. The mask is presentation; the only value sent to the API is `string` cents.
+- Never `parseFloat` cents. Never `Number()` a cents string without a range check (≤ `Number.MAX_SAFE_INTEGER`).
 
 ### 4.3 Query keys (TanStack Query)
 
@@ -128,45 +134,47 @@ Edge: if backend rejects a bet (insufficient balance or late), client must trans
 
 ## 6. WebSocket event contract (server → client)
 
-Suggested envelope (final shape decided by backend, but client must handle these semantics):
+Payloads confirmed against `services/games/src/infrastructure/websocket/game.gateway.interface.ts`. Client must subscribe to these five events on the root namespace.
 
-| Event | Payload | Client effect |
+| Event | Payload (exact shape from backend) | Client effect |
 |---|---|---|
-| `round.betting` | `{ roundId, hashCommitment, bettingEndsAt }` | Replace `["rounds","current"]` cache, store `hashCommitment` for provably-fair display, start countdown to `bettingEndsAt` |
-| `round.started` | `{ roundId, startTime, k }` | Phase → `FLYING`, store `startTime` + curve coefficient `k`, kick off the local rAF projection loop |
-| `round.tick` (optional) | `{ roundId, serverTime, current }` | Resync local clock offset (see § 7); do not redraw per tick |
-| `round.crashed` | `{ roundId, crashPoint, serverSeed, clientSeed, nonce }` | Phase → `CRASHED`, lock the displayed multiplier to `crashPoint`, surface the verification payload, settle any open bet as LOST locally, then invalidate `["wallet","me"]` |
-| `bet.placed` | `{ roundId, userId, username, amount }` | Append to current-round bet list (client cache); ignore own user (already added optimistically) |
-| `bet.cashed_out` | `{ roundId, userId, username, multiplier, payout }` | Update bet in list; if it's the current user, mark own bet WON and trigger `["wallet","me"]` invalidation |
+| `round.betting` | `{ roundId: string, hashCommitment: string, bettingEndsAt: string /* ISO */ }` | Phase → `BETTING_PHASE`. Replace `["rounds","current"]` cache. Store `hashCommitment` for the provably-fair display. Start countdown to `bettingEndsAt`. |
+| `round.started` | `{ roundId: string, startTime: string /* ISO */, growthRate: number /* per-second */ }` | Phase → `FLYING`. Parse `startTime` to epoch ms once; store with `growthRate`. Start the rAF projection loop. |
+| `round.crashed` | `{ roundId: string, crashPointHundredths: number, serverSeed: string, clientSeed: string, nonce: number }` | Phase → `CRASHED`. Lock displayed multiplier to `crashPointHundredths / 100`. Surface verification payload. Mark any still-CONFIRMED own bet as LOST. Invalidate `["wallet","me"]` and `["rounds","history"]`. |
+| `bet.placed` | `{ roundId, betId, userId, username, amountCents: string }` | Append/update entry in current-round bet list cache. For own user: match `betId` against any optimistic record and promote that record from `PENDING` to `CONFIRMED`. This is the authoritative confirmation that the wallet debit succeeded — no separate `bet.confirmed` event exists. |
+| `bet.cashed_out` | `{ roundId, betId, userId, username, multiplierHundredths: number, payoutCents: string }` | Update bet entry in list. For own user: mark bet as `WON` with the server's `payoutCents`/`multiplierHundredths` (overwriting any optimistic preview). Invalidate `["wallet","me"]` and `["bets","me"]`. |
+
+**No `round.tick` event.** The backend does not emit a periodic resync packet today. The client must project the multiplier purely from `startTime` + `growthRate` + the local clock (see § 7). Treat clock-drift mitigation as best-effort, not as something a tick will correct.
 
 **Reconnection:** on socket connect, fetch `GET /games/rounds/current` to bootstrap, **then** subscribe. Buffer no events while disconnected — backend state is authoritative.
 
-**Idempotency:** the client must tolerate duplicate events (use `roundId + eventType` as a dedupe key for terminal events; running events like `tick` are naturally idempotent).
+**Idempotency:** tolerate duplicate events. Dedupe terminal round events by `roundId`. Dedupe bet events by `betId`.
 
 ---
 
 ## 7. Multiplier projection (clock-based, not packet-based)
 
-Hard requirement: do **not** drive the multiplier off WebSocket frames. The backend sends `startTime` once; client projects.
+Hard requirement: do **not** drive the multiplier off WebSocket frames. The backend sends `startTime` + `growthRate` once on `round.started`; the client projects.
 
 **Algorithm:**
 
 ```ts
-// k provided by backend, e.g. 0.06 per second
-const elapsed = (Date.now() - clockOffset - startTime) / 1000;
-const multiplier = Math.exp(k * elapsed); // M = e^(k·t)
+// growthRate provided by backend on round.started, e.g. 0.06 per second.
+// startTimeMs = Date.parse(startTime) — done once per round.
+const elapsedSec = (Date.now() - clockOffsetMs - startTimeMs) / 1000;
+const multiplier = Math.exp(growthRate * elapsedSec); // M = e^(growthRate · t)
 ```
 
 **Clock offset:**
-- On each `round.tick` (or `round.started`), compute `clockOffset = Date.now() - serverTime`. Smooth with a low-pass filter (e.g. EMA, α=0.2) to avoid jitter.
-- Without ticks: assume offset = 0; tolerate up to one-frame drift.
+- Compute once on `round.started`: `clockOffsetMs = Date.now() - Date.parse(startTime)`. This captures the client/server skew at round boundary. Treat values |offset| > 5 s as anomalous (warn, but still render — better stale than blank).
+- There is no `round.tick` to resmoothe. If drift becomes a real-world issue, the mitigation is a periodic `GET /games/rounds/current` (e.g. every 30 s) rather than abusing the socket.
 
 **Render loop:**
 - Single `requestAnimationFrame` loop. Write to a `useRef` element (canvas/SVG transform/text node). **Never** call `setState` per frame.
 - The bet/cashout UI reads the multiplier via the same ref (or a `MotionValue`) for the potential-payout label — also non-reactive.
 - Stop the loop on `round.crashed` and on unmount.
 
-**Cap:** stop projecting past the displayed crash point even if `round.crashed` is late.
+**Cap:** once `round.crashed` arrives, lock the rendered value to `crashPointHundredths / 100`. If the local projection has already passed the crash point (clock drift), snap down to the authoritative value. Never let the displayed number exceed the server's crash point.
 
 ---
 
@@ -177,11 +185,12 @@ const multiplier = Math.exp(k * elapsed); // M = e^(k·t)
    - phase === `BETTING_PHASE`
    - no existing pending/confirmed bet for `roundId`
    - `walletBalance ≥ amount`
-3. Optimistic: insert a `PENDING` bet into the current-round bet list cache. Disable the bet button. Show "Processing…".
-4. `POST /games/bet { roundId, amount }`.
-5. On 2xx: keep the optimistic bet as `PENDING` until a `WalletDebited` confirmation arrives (either via a follow-up WS event, or by re-fetching `["rounds","current"]`). Refetch `["wallet","me"]` once the server confirms.
-6. On 4xx (validation, late, duplicate, insufficient): remove optimistic bet, re-enable button, surface error toast with the server message.
-7. On network failure: same rollback; **do not retry** writes silently (avoid double-bet). Let the user re-submit.
+3. Optimistic: insert a `PENDING` bet into the current-round bet list cache, keyed by a client-generated tag (e.g. `crypto.randomUUID()`). Disable the bet button. Show "Processing…".
+4. `POST /games/bet { roundId, amountCents }`. Body uses string cents.
+5. On 2xx: the response carries the canonical `betId`. Replace the client tag in the optimistic record with the real `betId`. Keep status `PENDING` until the `bet.placed` WS event for that `betId` arrives — that event is the authoritative confirmation that the wallet debit succeeded; transition the record to `CONFIRMED` and refetch `["wallet","me"]`.
+6. If a `round.started` event fires while the bet is still `PENDING` (no `bet.placed` seen yet), keep the bet `PENDING`. It can still settle as `CONFIRMED` mid-flight or as `CANCELLED` if the wallet later fails (server emits `bet.placed` only on success). Disable cashout until the bet is `CONFIRMED`.
+7. On 4xx (validation, late, duplicate, insufficient): remove optimistic bet, re-enable button, surface error toast with the server message.
+8. On network failure: same rollback; **do not retry** writes silently (avoid double-bet). Let the user re-submit.
 
 ---
 
@@ -203,9 +212,9 @@ const multiplier = Math.exp(k * elapsed); // M = e^(k·t)
 
 **During `BETTING_PHASE`:** display `hashCommitment` from `round.betting`. This must be visible before any bet is placed.
 
-**After `CRASHED`:** display `serverSeed`, `clientSeed`, `nonce`, and the resulting `crashPoint`. Provide a verification panel that:
+**After `CRASHED`:** display `serverSeed`, `clientSeed`, `nonce`, and `crashPointHundredths / 100`. Provide a verification panel that:
 
-1. Re-hashes `serverSeed` with SHA-256 and asserts it matches the previously-shown `hashCommitment`.
+1. Re-hashes `serverSeed` with SHA-256 and asserts the resulting hex matches the previously-shown `hashCommitment`.
 2. Recomputes the crash point using the documented HMAC-SHA256 formula (`docs/references/provably-fair.md`):
 
 ```ts
@@ -220,7 +229,7 @@ const e = 2 ** 52;
 const m = Math.max(1, Math.floor((100 * e - h) / (e - h)) / 100);
 ```
 
-3. Asserts `m === crashPoint`. Show pass/fail.
+3. Asserts `Math.round(m * 100) === crashPointHundredths`. Show pass/fail.
 
 Also expose a "verify any past round" UI that calls `GET /games/rounds/:roundId/verify` and runs the same routine.
 
@@ -269,11 +278,15 @@ Functional requirements (presentation later):
 
 ## 14. Monetary precision
 
-- Internal representation: integer cents (`number` is safe up to 2^53; balances will not exceed this for the challenge).
-- Display: format with `Intl.NumberFormat` at the rendering boundary; never round in business logic.
-- Inputs: parse user input to cents with a single utility (e.g. `parseAmountToCents(input: string): number | ParseError`). Reject anything that is not finite, not in range, or has more than 2 decimal places.
-- API payloads: send cents as `number` (or as string if backend chooses string-encoded amounts — adapt at the API client layer).
-- **Never** use `parseFloat` for money. **Never** multiply money by the multiplier in business logic; only compute previews in display code, and trust the backend's authoritative payout.
+- **Wire format (confirmed):** `string` decimal of integer cents for amounts; `number` integer hundredths for multipliers. See § 4.2.
+- **Internal representation:** integer cents. Use `bigint` if you want type-level safety against accidental float ops; otherwise plain `number` is safe (balances stay well below 2^53). Pick one and apply consistently across the API client.
+- **Display:** format with `Intl.NumberFormat` at the rendering boundary. Multipliers render as `(hundredths / 100).toFixed(2) + "x"`.
+- **Input UX:** the bet amount field uses a decimal mask (locale-appropriate, e.g. `1.234,56`). Convert to integer cents on submit with a single utility (`parseAmountToCents(input: string): bigint | ParseError`). Reject:
+  - non-finite or NaN
+  - more than 2 decimal places
+  - outside `[100n, 100_000n]` cents (the `[1.00, 1000.00]` rule)
+- API payloads: send cents as the **string** the backend expects. Cast at the API client layer; domain code should not see the wire type.
+- **Never** `parseFloat` cents. **Never** persist `betAmount × multiplier` as a derived stored value — compute in render code only, and trust `payoutCents` from `bet.cashed_out`.
 
 ---
 
@@ -306,10 +319,11 @@ TanStack Router file-based: each path = one file under `src/routes/`. Protected 
 ## 17. Testing requirements
 
 - Unit (Vitest):
-  - Multiplier projection function (deterministic given `startTime`, `k`, `now`).
-  - Cents parser (range, decimals, non-finite input).
-  - Provably-fair verifier (recompute crash point from known seed pair; SHA-256 of seed matches commitment).
+  - Multiplier projection function (deterministic given `startTime`, `growthRate`, `now`).
+  - Cents parser (range, decimals, non-finite input, locale masks).
+  - Provably-fair verifier (recompute `crashPointHundredths` from known seed pair; SHA-256 of `serverSeed` matches `hashCommitment`).
   - Round state machine transitions (legal vs illegal).
+  - Bet reconciliation: optimistic record promoted to `CONFIRMED` when matching `bet.placed` (by `betId`) arrives; remains `PENDING` if `bet.placed` never arrives; LOST on `round.crashed` while still `CONFIRMED`.
 - Component:
   - Bet controls gated correctly per phase.
   - Cashout button disabled without a confirmed bet.
@@ -317,10 +331,15 @@ TanStack Router file-based: each path = one file under `src/routes/`. Protected 
 
 ---
 
-## 18. Open questions (need backend confirmation)
+## 18. Resolved decisions
 
-1. Exact Socket.IO namespace/path under Kong.
-2. Money format on the wire — `number` cents or `string` decimal? Adapt API client accordingly.
-3. Is `round.tick` actually emitted, and at what cadence? Affects clock-offset smoothing.
-4. Bet confirmation path: does the server emit a `bet.confirmed` WS event, or only a list refresh via `round.*`? Affects optimistic state lifetime.
-5. Logto resource indicator value (`VITE_LOGTO_RESOURCE`) — must match the Game/Wallet API audience configured in Logto + Kong.
+1. **Socket.IO path/namespace** — root namespace `/`, default path `/socket.io/`. Gateway has no namespace/path overrides (`@WebSocketGateway({ cors: { origin: '*' } })`). Connect directly to the games service at port `4001` until Kong WS routing is wired.
+2. **Money on the wire** — `amountCents` / `payoutCents` are `string` of integer cents (`BIGINT` serialized). `crashPointHundredths` / `multiplierHundredths` are `number` integer hundredths. Bet input is a masked decimal locally; only string cents go over the wire.
+3. **No `round.tick`** — no periodic resync packet exists. Client computes the curve from `startTime` + `growthRate` alone. Use `GET /games/rounds/current` if a hard resync is needed.
+4. **Bet confirmation path** — `bet.placed` carries `betId` and fires only after the wallet debit succeeds. Match the WS event against the `betId` returned by `POST /games/bet` to promote optimistic `PENDING` → `CONFIRMED`. No separate `bet.confirmed` event.
+5. **No RBAC** — challenge does not require it. A valid Logto JWT is the only gate. Add scope-based checks only if/when introduced server-side.
+
+## 19. Outstanding (not blockers, just unresolved)
+
+- Logto resource indicator (`VITE_LOGTO_RESOURCE`) — must match the Game/Wallet API audience configured in Logto and validated by Kong. Verify with the Logto admin console + Kong's JWT plugin config.
+- Kong WS routing — currently the frontend must hit the games service directly for Socket.IO. Decide whether to route `/socket.io/*` through Kong (uniform origin) or keep the split.
