@@ -16,3 +16,14 @@ services:
         paths:
           - /wallets
         strip_path: true
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - http://localhost:3000
+        - http://frontend:3000
+
+      methods:
+        - GET
+        - POST
