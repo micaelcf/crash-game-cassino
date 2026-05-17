@@ -9,11 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlaygroundIndexRouteImport } from './routes/playground/index'
+import { Route as PlaygroundWalletRouteImport } from './routes/playground/wallet'
+import { Route as PlaygroundVerifyRouteImport } from './routes/playground/verify'
+import { Route as PlaygroundRoundRouteImport } from './routes/playground/round'
+import { Route as PlaygroundHistoryRouteImport } from './routes/playground/history'
+import { Route as PlaygroundBetRouteImport } from './routes/playground/bet'
+import { Route as PlaygroundAuthRouteImport } from './routes/playground/auth'
 
+const PlaygroundRoute = PlaygroundRouteImport.update({
+  id: '/playground',
+  path: '/playground',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -34,18 +47,68 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlaygroundIndexRoute = PlaygroundIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlaygroundRoute,
+} as any)
+const PlaygroundWalletRoute = PlaygroundWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => PlaygroundRoute,
+} as any)
+const PlaygroundVerifyRoute = PlaygroundVerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => PlaygroundRoute,
+} as any)
+const PlaygroundRoundRoute = PlaygroundRoundRouteImport.update({
+  id: '/round',
+  path: '/round',
+  getParentRoute: () => PlaygroundRoute,
+} as any)
+const PlaygroundHistoryRoute = PlaygroundHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => PlaygroundRoute,
+} as any)
+const PlaygroundBetRoute = PlaygroundBetRouteImport.update({
+  id: '/bet',
+  path: '/bet',
+  getParentRoute: () => PlaygroundRoute,
+} as any)
+const PlaygroundAuthRoute = PlaygroundAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => PlaygroundRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/playground': typeof PlaygroundRouteWithChildren
+  '/playground/auth': typeof PlaygroundAuthRoute
+  '/playground/bet': typeof PlaygroundBetRoute
+  '/playground/history': typeof PlaygroundHistoryRoute
+  '/playground/round': typeof PlaygroundRoundRoute
+  '/playground/verify': typeof PlaygroundVerifyRoute
+  '/playground/wallet': typeof PlaygroundWalletRoute
+  '/playground/': typeof PlaygroundIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/callback': typeof CallbackRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/playground/auth': typeof PlaygroundAuthRoute
+  '/playground/bet': typeof PlaygroundBetRoute
+  '/playground/history': typeof PlaygroundHistoryRoute
+  '/playground/round': typeof PlaygroundRoundRoute
+  '/playground/verify': typeof PlaygroundVerifyRoute
+  '/playground/wallet': typeof PlaygroundWalletRoute
+  '/playground': typeof PlaygroundIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +116,57 @@ export interface FileRoutesById {
   '/callback': typeof CallbackRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/playground': typeof PlaygroundRouteWithChildren
+  '/playground/auth': typeof PlaygroundAuthRoute
+  '/playground/bet': typeof PlaygroundBetRoute
+  '/playground/history': typeof PlaygroundHistoryRoute
+  '/playground/round': typeof PlaygroundRoundRoute
+  '/playground/verify': typeof PlaygroundVerifyRoute
+  '/playground/wallet': typeof PlaygroundWalletRoute
+  '/playground/': typeof PlaygroundIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/callback' | '/dashboard' | '/login'
+  fullPaths:
+    | '/'
+    | '/callback'
+    | '/dashboard'
+    | '/login'
+    | '/playground'
+    | '/playground/auth'
+    | '/playground/bet'
+    | '/playground/history'
+    | '/playground/round'
+    | '/playground/verify'
+    | '/playground/wallet'
+    | '/playground/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/callback' | '/dashboard' | '/login'
-  id: '__root__' | '/' | '/callback' | '/dashboard' | '/login'
+  to:
+    | '/'
+    | '/callback'
+    | '/dashboard'
+    | '/login'
+    | '/playground/auth'
+    | '/playground/bet'
+    | '/playground/history'
+    | '/playground/round'
+    | '/playground/verify'
+    | '/playground/wallet'
+    | '/playground'
+  id:
+    | '__root__'
+    | '/'
+    | '/callback'
+    | '/dashboard'
+    | '/login'
+    | '/playground'
+    | '/playground/auth'
+    | '/playground/bet'
+    | '/playground/history'
+    | '/playground/round'
+    | '/playground/verify'
+    | '/playground/wallet'
+    | '/playground/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +174,18 @@ export interface RootRouteChildren {
   CallbackRoute: typeof CallbackRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  PlaygroundRoute: typeof PlaygroundRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/playground': {
+      id: '/playground'
+      path: '/playground'
+      fullPath: '/playground'
+      preLoaderRoute: typeof PlaygroundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -99,14 +214,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/playground/': {
+      id: '/playground/'
+      path: '/'
+      fullPath: '/playground/'
+      preLoaderRoute: typeof PlaygroundIndexRouteImport
+      parentRoute: typeof PlaygroundRoute
+    }
+    '/playground/wallet': {
+      id: '/playground/wallet'
+      path: '/wallet'
+      fullPath: '/playground/wallet'
+      preLoaderRoute: typeof PlaygroundWalletRouteImport
+      parentRoute: typeof PlaygroundRoute
+    }
+    '/playground/verify': {
+      id: '/playground/verify'
+      path: '/verify'
+      fullPath: '/playground/verify'
+      preLoaderRoute: typeof PlaygroundVerifyRouteImport
+      parentRoute: typeof PlaygroundRoute
+    }
+    '/playground/round': {
+      id: '/playground/round'
+      path: '/round'
+      fullPath: '/playground/round'
+      preLoaderRoute: typeof PlaygroundRoundRouteImport
+      parentRoute: typeof PlaygroundRoute
+    }
+    '/playground/history': {
+      id: '/playground/history'
+      path: '/history'
+      fullPath: '/playground/history'
+      preLoaderRoute: typeof PlaygroundHistoryRouteImport
+      parentRoute: typeof PlaygroundRoute
+    }
+    '/playground/bet': {
+      id: '/playground/bet'
+      path: '/bet'
+      fullPath: '/playground/bet'
+      preLoaderRoute: typeof PlaygroundBetRouteImport
+      parentRoute: typeof PlaygroundRoute
+    }
+    '/playground/auth': {
+      id: '/playground/auth'
+      path: '/auth'
+      fullPath: '/playground/auth'
+      preLoaderRoute: typeof PlaygroundAuthRouteImport
+      parentRoute: typeof PlaygroundRoute
+    }
   }
 }
+
+interface PlaygroundRouteChildren {
+  PlaygroundAuthRoute: typeof PlaygroundAuthRoute
+  PlaygroundBetRoute: typeof PlaygroundBetRoute
+  PlaygroundHistoryRoute: typeof PlaygroundHistoryRoute
+  PlaygroundRoundRoute: typeof PlaygroundRoundRoute
+  PlaygroundVerifyRoute: typeof PlaygroundVerifyRoute
+  PlaygroundWalletRoute: typeof PlaygroundWalletRoute
+  PlaygroundIndexRoute: typeof PlaygroundIndexRoute
+}
+
+const PlaygroundRouteChildren: PlaygroundRouteChildren = {
+  PlaygroundAuthRoute: PlaygroundAuthRoute,
+  PlaygroundBetRoute: PlaygroundBetRoute,
+  PlaygroundHistoryRoute: PlaygroundHistoryRoute,
+  PlaygroundRoundRoute: PlaygroundRoundRoute,
+  PlaygroundVerifyRoute: PlaygroundVerifyRoute,
+  PlaygroundWalletRoute: PlaygroundWalletRoute,
+  PlaygroundIndexRoute: PlaygroundIndexRoute,
+}
+
+const PlaygroundRouteWithChildren = PlaygroundRoute._addFileChildren(
+  PlaygroundRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CallbackRoute: CallbackRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  PlaygroundRoute: PlaygroundRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

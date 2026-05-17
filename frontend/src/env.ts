@@ -17,6 +17,8 @@ export const env = createEnv({
 		VITE_LOGTO_ENDPOINT: z.string().url(),
 		VITE_LOGTO_APP_ID: z.string().min(1),
 		VITE_LOGTO_RESOURCE: z.string().url().optional(),
+		VITE_API_BASE_URL: z.string().url(),
+		VITE_WS_URL: z.string().url(),
 	},
 
 	/**
