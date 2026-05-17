@@ -1,13 +1,20 @@
 {
-	"name": "crash-game",
-	"private": true,
-	"workspaces": ["services/*", "packages/*", "frontend"],
-	"scripts": {
-		"docker:up": "podman compose up",
-		"docker:down": "podman compose down",
-		"docker:prune": "podman compose down -v --rmi all --remove-orphans && podman volume prune -f"
-	},
-	"devDependencies": {
-		"bun-types": "latest"
-	}
+  "name": "crash-game",
+  "private": true,
+  "workspaces": ["services/*", "packages/*", "frontend"],
+  "scripts": {
+    "docker:up": "bun scripts/compose.ts up -d postgres rabbitmq logto kong games wallets && bun scripts/seed-logto.ts && bun scripts/compose.ts up -d --build frontend",
+    "docker:down": "bun scripts/compose.ts down",
+    "docker:prune": "bun scripts/compose.ts down -v --rmi all --remove-orphans",
+    "seed:logto": "bun scripts/seed-logto.ts"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "@types/bun": "latest"
+  },
+  "module": "index.ts",
+  "type": "module",
+  "peerDependencies": {
+    "typescript": "^5"
+  }
 }
