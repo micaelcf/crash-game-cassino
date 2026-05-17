@@ -17,8 +17,10 @@ RUN bun run build
 FROM base AS runner
 ENV NODE_ENV=production
 # TanStack Start v1 (Vite 8) emits to dist/ — server entry at dist/server/server.js,
-# static client assets at dist/client/.
+# static client assets at dist/client/. Server bundle keeps deps external, so we ship
+# node_modules alongside it.
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
