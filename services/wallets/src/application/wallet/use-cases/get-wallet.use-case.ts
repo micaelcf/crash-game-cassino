@@ -1,0 +1,23 @@
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Wallet } from '../../../domain/wallet/wallet.entity';
+import { BaseRepository } from '../../../infrastructure/db/base.repository';
+import { GetWalletQuery } from '../queries/get-wallet.query';
+
+@Injectable()
+export class GetWalletUseCase {
+  constructor(
+    @InjectRepository(Wallet)
+    private readonly walletRepository: BaseRepository<Wallet>,
+  ) {}
+
+  async execute(query: GetWalletQuery): Promise<Wallet> {
+    const wallet = await this.walletRepository.findOne({
+      playerId: query.playerId,
+    });
+    if (!wallet) {
+      throw new NotFoundException('Wallet not found');
+    }
+    return wallet;
+  }
+}

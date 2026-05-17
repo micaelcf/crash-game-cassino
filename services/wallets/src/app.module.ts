@@ -1,7 +1,20 @@
-import { Module } from "@nestjs/common";
-import { WalletsController } from "./presentation/controllers/wallets.controller";
+import { MikroOrmModule } from '@mikro-orm/nestjs'
+import { Module, ValidationPipe } from '@nestjs/common'
+import { APP_PIPE } from '@nestjs/core'
+import { InfrastructureModule } from './infrastructure/infrastructure.module'
+import mikroOrmConfig from './infrastructure/db/mikro-orm.config'
 
 @Module({
-  controllers: [WalletsController],
+	imports: [
+		MikroOrmModule.forRoot({ ...mikroOrmConfig, autoLoadEntities: true }),
+		InfrastructureModule,
+	],
+	providers: [
+		{
+			provide: APP_PIPE,
+			useFactory: () =>
+				new ValidationPipe({ whitelist: true, transform: true }),
+		},
+	],
 })
 export class AppModule {}
