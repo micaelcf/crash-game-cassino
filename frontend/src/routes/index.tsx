@@ -13,7 +13,7 @@ function Home() {
 				Place a bet, watch the multiplier climb, and cash out before it crashes.
 			</p>
 
-			<div className="flex gap-3">
+			<div className="flex flex-wrap justify-center gap-3">
 				{isAuthenticated ? (
 					<Link
 						to="/dashboard"
@@ -29,6 +29,12 @@ function Home() {
 						Sign in
 					</Link>
 				)}
+				<Link
+					to="/playground"
+					className="rounded-lg border border-slate-700 px-5 py-3 font-semibold text-slate-200 hover:bg-slate-900"
+				>
+					Open playground
+				</Link>
 			</div>
 		</main>
 	);
