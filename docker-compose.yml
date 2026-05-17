@@ -3,7 +3,7 @@ services:
   # PostgreSQL 18
   # ---------------------------------------------------------------------------
   postgres:
-    image: postgres:18.3-alpine
+    image: postgres:18-alpine
     ports:
       - "5432:5432"
     environment:
@@ -24,7 +24,7 @@ services:
   # RabbitMQ (with management UI)
   # ---------------------------------------------------------------------------
   rabbitmq:
-    image: rabbitmq:4.2.4-management-alpine
+    image: rabbitmq:4-management-alpine
     ports:
       - "5672:5672"
       - "15672:15672"
