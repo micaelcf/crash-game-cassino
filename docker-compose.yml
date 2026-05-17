@@ -46,7 +46,13 @@ services:
   # RabbitMQ (with management UI)
   # ---------------------------------------------------------------------------
   rabbitmq:
-    image: rabbitmq:4-management-alpine
+    image: rabbitmq:4-management
+    # Run as root so the entrypoint can chown /var/lib/rabbitmq before
+    # dropping to the rabbitmq user. Required on rootless podman, where
+    # a freshly-created anonymous/named volume is owned by root and the
+    # rabbitmq user otherwise hits eacces on .erlang.cookie during init.
+    user: "0:0"
+    restart: on-failure
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -60,12 +66,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
 
   # ---------------------------------------------------------------------------
   # RabbitMQ — test instance (dedicated broker for e2e/integration tests)
   # ---------------------------------------------------------------------------
   rabbitmq-test:
     image: rabbitmq:4-management-alpine
+    user: "0:0"
+    restart: on-failure
     profiles: ["test"]
     ports:
       - "5673:5672"
@@ -80,6 +89,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
 
   # ---------------------------------------------------------------------------
   # Logto (Identity Provider)
@@ -115,6 +125,9 @@ services:
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      # Aardvark (podman's DNS) does not answer SRV queries for short names;
+      # Kong's default dns_order tries SRV first and times out. Force A-first.
+      KONG_DNS_ORDER: "LAST,A,CNAME,SRV"
     volumes:
       - ./docker/kong:/kong:ro
     healthcheck:
@@ -145,11 +158,11 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:4001/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 15s
+      start_period: 30s
 
   # ---------------------------------------------------------------------------
   # Wallets Service
@@ -168,11 +181,11 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:4002/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4002/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 15s
+      start_period: 30s
 
   # ---------------------------------------------------------------------------
   # Frontend
