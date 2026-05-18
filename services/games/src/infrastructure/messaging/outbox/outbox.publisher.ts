@@ -4,6 +4,7 @@ import {
 	type RabbitPublisher,
 } from '@infrastructure/messaging/amqp/rabbit-publisher'
 import { OutboxEvent } from '@infrastructure/messaging/outbox/outbox-event.entity'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import { MikroORM, RequestContext } from '@mikro-orm/core'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Inject, Injectable, Logger } from '@nestjs/common'
@@ -22,6 +23,7 @@ export class OutboxPublisher {
 		private readonly outboxRepository: BaseRepository<OutboxEvent>,
 		@Inject(RABBIT_PUBLISHER) private readonly publisher: RabbitPublisher,
 		@Inject('RABBIT_EXCHANGE') private readonly exchange: string,
+		private readonly metrics: GameMetrics,
 	) {}
 
 	@Interval(500)
@@ -58,6 +60,10 @@ export class OutboxPublisher {
 					},
 				)
 				evt.markPublished()
+				const publishedAt = evt.publishedAt ?? new Date()
+				this.metrics.observeOutboxLag(
+					publishedAt.getTime() - evt.createdAt.getTime(),
+				)
 				mutated = true
 			} catch (_err) {
 				evt.recordAttempt()

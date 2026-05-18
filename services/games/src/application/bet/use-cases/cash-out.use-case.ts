@@ -6,6 +6,7 @@ import { RoundNotFlyingException } from '@domain/round/round.exceptions'
 import { CLOCK, type Clock } from '@domain/shared/clock'
 import { BaseRepository } from '@infrastructure/db/base.repository'
 import { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import {
 	GAME_BROADCASTER,
 	type GameBroadcaster,
@@ -24,6 +25,7 @@ export class CashOutUseCase {
 		@Inject(CLOCK) private readonly clock: Clock,
 		@Inject(GAME_BROADCASTER)
 		private readonly broadcaster: GameBroadcaster,
+		private readonly metrics: GameMetrics,
 	) {}
 
 	async execute(command: CashOutCommand): Promise<Bet> {
@@ -67,6 +69,8 @@ export class CashOutUseCase {
 			multiplierHundredths: multiplier,
 			payoutCents: (bet.payoutCents ?? 0).toString(),
 		})
+
+		this.metrics.recordBetWon(bet.payoutCents ?? 0n)
 
 		return bet
 	}

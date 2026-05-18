@@ -1,13 +1,17 @@
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import { GameGateway } from '@infrastructure/websocket/game.gateway'
+import { Registry } from 'prom-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 describe('GameGateway', () => {
 	let server: { emit: ReturnType<typeof vi.fn> }
 	let gateway: GameGateway
+	let registry: Registry
 
 	beforeEach(() => {
 		server = { emit: vi.fn() }
-		gateway = new GameGateway()
+		registry = new Registry()
+		gateway = new GameGateway(new GameMetrics(registry))
 		gateway.server = server as unknown as GameGateway['server']
 	})
 
@@ -96,5 +100,23 @@ describe('GameGateway', () => {
 			userId: 'u1',
 			reason: 'Insufficient balance',
 		})
+	})
+
+	it('records crash_ws_emit_duration_ms labelled by event name', async () => {
+		gateway.emitRoundBetting({
+			roundId: 'r1',
+			hashCommitment: 'h',
+			bettingEndsAt: 't',
+		})
+		const hist = await registry
+			.getSingleMetric('crash_ws_emit_duration_ms')
+			?.get()
+		const count = hist?.values.find(
+			(v) =>
+				(v as { metricName?: string }).metricName ===
+					'crash_ws_emit_duration_ms_count' &&
+				(v.labels as { event?: string }).event === 'round.betting',
+		)
+		expect(count?.value).toBe(1)
 	})
 })

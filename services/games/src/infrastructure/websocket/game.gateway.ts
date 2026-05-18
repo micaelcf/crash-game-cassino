@@ -1,3 +1,4 @@
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import {
 	BetCancelledPayload,
 	BetCashedOutPayload,
@@ -17,27 +18,48 @@ export class GameGateway implements GameBroadcaster {
 	@WebSocketServer()
 	server!: Server
 
+	constructor(private readonly metrics: GameMetrics) {}
+
+	private timed(event: string, fn: () => void): void {
+		const stop = this.metrics.timeWsEmit(event)
+		try {
+			fn()
+		} finally {
+			stop()
+		}
+	}
+
 	emitRoundBetting(payload: RoundBettingPayload): void {
-		this.server.emit('round.betting', payload)
+		this.timed('round.betting', () =>
+			this.server.emit('round.betting', payload),
+		)
 	}
 
 	emitRoundStarted(payload: RoundStartedPayload): void {
-		this.server.emit('round.started', payload)
+		this.timed('round.started', () =>
+			this.server.emit('round.started', payload),
+		)
 	}
 
 	emitRoundCrashed(payload: RoundCrashedPayload): void {
-		this.server.emit('round.crashed', payload)
+		this.timed('round.crashed', () =>
+			this.server.emit('round.crashed', payload),
+		)
 	}
 
 	emitBetPlaced(payload: BetPlacedPayload): void {
-		this.server.emit('bet.placed', payload)
+		this.timed('bet.placed', () => this.server.emit('bet.placed', payload))
 	}
 
 	emitBetCashedOut(payload: BetCashedOutPayload): void {
-		this.server.emit('bet.cashed_out', payload)
+		this.timed('bet.cashed_out', () =>
+			this.server.emit('bet.cashed_out', payload),
+		)
 	}
 
 	emitBetCancelled(payload: BetCancelledPayload): void {
-		this.server.emit('bet.cancelled', payload)
+		this.timed('bet.cancelled', () =>
+			this.server.emit('bet.cancelled', payload),
+		)
 	}
 }

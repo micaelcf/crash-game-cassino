@@ -2,7 +2,9 @@ import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { RabbitPublisher } from '@infrastructure/messaging/amqp/rabbit-publisher'
 import { OutboxPublisher } from '@infrastructure/messaging/outbox/outbox.publisher'
 import { OutboxEvent } from '@infrastructure/messaging/outbox/outbox-event.entity'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import type { MikroORM } from '@mikro-orm/core'
+import { Registry } from 'prom-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 type OutboxRepo = BaseRepository<OutboxEvent>
@@ -48,6 +50,7 @@ describe('OutboxPublisher (games)', () => {
 			repo as unknown as OutboxRepo,
 			publisher as unknown as RabbitPublisher,
 			'crash.events',
+			new GameMetrics(new Registry()),
 		)
 
 		await sut.drain()
@@ -71,6 +74,7 @@ describe('OutboxPublisher (games)', () => {
 			repo as unknown as OutboxRepo,
 			publisher as unknown as RabbitPublisher,
 			'crash.events',
+			new GameMetrics(new Registry()),
 		)
 
 		await sut.drain()
@@ -78,5 +82,32 @@ describe('OutboxPublisher (games)', () => {
 		expect(evt.publishedAt).toBeNull()
 		expect(evt.attempts).toBe(1)
 		expect(repo.flush).toHaveBeenCalled()
+	})
+
+	it('observes crash_outbox_publish_lag_ms when an event is successfully published', async () => {
+		const createdAt = new Date(Date.now() - 250)
+		const evt = newEvent({ createdAt })
+		const repo = makeRepo([evt])
+		const publisher = makePublisher()
+		const registry = new Registry()
+		const sut = new OutboxPublisher(
+			fakeOrm,
+			repo as unknown as OutboxRepo,
+			publisher as unknown as RabbitPublisher,
+			'crash.events',
+			new GameMetrics(registry),
+		)
+
+		await sut.drain()
+
+		const hist = await registry
+			.getSingleMetric('crash_outbox_publish_lag_ms')
+			?.get()
+		const count = hist?.values.find(
+			(v) =>
+				(v as { metricName?: string }).metricName ===
+				'crash_outbox_publish_lag_ms_count',
+		)
+		expect(count?.value).toBe(1)
 	})
 })

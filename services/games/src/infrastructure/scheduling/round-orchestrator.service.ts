@@ -4,6 +4,7 @@ import { ProvablyFairService } from '@domain/round/provably-fair.service'
 import { Round, RoundStatus } from '@domain/round/round.entity'
 import { BaseRepository } from '@infrastructure/db/base.repository'
 import { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import {
 	ROUND_ORCHESTRATOR_CONFIG,
 	type RoundOrchestratorConfig,
@@ -40,6 +41,7 @@ export class RoundOrchestrator implements OnModuleInit, OnModuleDestroy {
 		@Inject(GAME_BROADCASTER) private readonly broadcaster: GameBroadcaster,
 		@Inject(ROUND_ORCHESTRATOR_CONFIG)
 		private readonly config: RoundOrchestratorConfig,
+		private readonly metrics: GameMetrics,
 	) {}
 
 	async onModuleInit(): Promise<void> {
@@ -148,6 +150,7 @@ export class RoundOrchestrator implements OnModuleInit, OnModuleDestroy {
 		for (const bet of confirmed) {
 			bet.markLost()
 		}
+		this.metrics.recordBetsLost(confirmed.length)
 
 		this.events.publish('round.crashed', 'Round', round.id, {
 			roundId: round.id,

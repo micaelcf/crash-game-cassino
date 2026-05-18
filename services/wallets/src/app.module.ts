@@ -1,5 +1,6 @@
 import mikroOrmConfig from '@infrastructure/db/mikro-orm.config'
 import { InfrastructureModule } from '@infrastructure/infrastructure.module'
+import { ObservabilityModule } from '@infrastructure/observability/observability.module'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
 import { Module, ValidationPipe } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
@@ -9,6 +10,7 @@ import { APP_PIPE } from '@nestjs/core'
 	imports: [
 		ConfigModule.forRoot(),
 		MikroOrmModule.forRoot(mikroOrmConfig),
+		ObservabilityModule,
 		InfrastructureModule,
 	],
 	providers: [

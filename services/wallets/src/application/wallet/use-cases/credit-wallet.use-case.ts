@@ -2,6 +2,7 @@ import { CreditWalletCommand } from '@application/wallet/dtos/credit-wallet.comm
 import { Wallet } from '@domain/wallet/wallet.entity'
 import { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
+import { WalletMetrics } from '@infrastructure/observability/wallet-metrics'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Injectable } from '@nestjs/common'
 
@@ -12,6 +13,7 @@ export class CreditWalletUseCase {
 		private readonly walletRepository: BaseRepository<Wallet>,
 		@InjectRepository(InboxEvent)
 		private readonly inboxRepository: BaseRepository<InboxEvent>,
+		private readonly metrics: WalletMetrics,
 	) {}
 
 	async execute(command: CreditWalletCommand): Promise<void> {
@@ -28,5 +30,6 @@ export class CreditWalletUseCase {
 		wallet.credit(command.amount)
 		this.inboxRepository.create({ id: command.messageId })
 		await this.walletRepository.flush()
+		this.metrics.recordCredit()
 	}
 }

@@ -9,6 +9,7 @@ import { Round, RoundStatus } from '@domain/round/round.entity'
 import { RoundNotBettingException } from '@domain/round/round.exceptions'
 import { BaseRepository } from '@infrastructure/db/base.repository'
 import { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Injectable } from '@nestjs/common'
 
@@ -20,6 +21,7 @@ export class PlaceBetUseCase {
 		@InjectRepository(Bet)
 		private readonly bets: BaseRepository<Bet>,
 		private readonly events: EventPublisher,
+		private readonly metrics: GameMetrics,
 	) {}
 
 	async execute(command: PlaceBetCommand): Promise<Bet> {
@@ -71,6 +73,7 @@ export class PlaceBetUseCase {
 		})
 
 		await this.bets.flush()
+		this.metrics.recordBetPlaced(bet.amountCents)
 		return bet
 	}
 }

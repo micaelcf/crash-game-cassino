@@ -9,6 +9,8 @@ import { Round, RoundStatus } from '@domain/round/round.entity'
 import { RoundNotBettingException } from '@domain/round/round.exceptions'
 import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
+import { Registry } from 'prom-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 type EventRecord = {
@@ -103,6 +105,7 @@ describe('PlaceBetUseCase', () => {
 			ctx.rounds as unknown as RoundRepo,
 			ctx.bets as unknown as BetRepo,
 			ctx.events,
+			new GameMetrics(new Registry()),
 		)
 
 		const bet = await useCase.execute(
@@ -122,12 +125,38 @@ describe('PlaceBetUseCase', () => {
 		expect(ctx.flushCalls.count).toBe(1)
 	})
 
+	it('increments crash_bets_total{status="placed"} and bet amount sum', async () => {
+		const round = newRound()
+		const ctx = makeCtx({ round })
+		const registry = new Registry()
+		const metrics = new GameMetrics(registry)
+		const useCase = new PlaceBetUseCase(
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
+			ctx.events,
+			metrics,
+		)
+
+		await useCase.execute(new PlaceBetCommand('u-1', 'alice', 1_500n))
+
+		const total = await registry.getSingleMetric('crash_bets_total')?.get()
+		const placed = total?.values.find(
+			(v) => (v.labels as { status?: string }).status === 'placed',
+		)
+		expect(placed?.value).toBe(1)
+		const stake = await registry
+			.getSingleMetric('crash_bet_amount_cents_sum')
+			?.get()
+		expect(stake?.values[0]?.value).toBe(1_500)
+	})
+
 	it('rejects when no current round exists', async () => {
 		const ctx = makeCtx({ round: null })
 		const useCase = new PlaceBetUseCase(
 			ctx.rounds as unknown as RoundRepo,
 			ctx.bets as unknown as BetRepo,
 			ctx.events,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(
@@ -142,6 +171,7 @@ describe('PlaceBetUseCase', () => {
 			ctx.rounds as unknown as RoundRepo,
 			ctx.bets as unknown as BetRepo,
 			ctx.events,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(
@@ -156,6 +186,7 @@ describe('PlaceBetUseCase', () => {
 			ctx.rounds as unknown as RoundRepo,
 			ctx.bets as unknown as BetRepo,
 			ctx.events,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(
@@ -174,6 +205,7 @@ describe('PlaceBetUseCase', () => {
 			ctx.rounds as unknown as RoundRepo,
 			ctx.bets as unknown as BetRepo,
 			ctx.events,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(

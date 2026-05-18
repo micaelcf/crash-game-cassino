@@ -3,9 +3,11 @@ import type { ProvablyFairService } from '@domain/round/provably-fair.service'
 import { Round, RoundStatus } from '@domain/round/round.entity'
 import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import { RoundOrchestrator } from '@infrastructure/scheduling/round-orchestrator.service'
 import type { GameBroadcaster } from '@infrastructure/websocket/game.gateway.interface'
 import type { EntityManager, MikroORM } from '@mikro-orm/core'
+import { Registry } from 'prom-client'
 import {
 	afterAll,
 	afterEach,
@@ -82,13 +84,12 @@ const makeCtx = (): OrchestratorCtx => {
 		flush: vi.fn().mockResolvedValue(undefined),
 	} as unknown as RoundRepo
 	const bets = {
-		find: vi.fn(
-			async (where: { roundId?: string; status?: BetStatus }) =>
-				state.bets.filter(
-					(b) =>
-						(!where.roundId || b.roundId === where.roundId) &&
-						(!where.status || b.status === where.status),
-				),
+		find: vi.fn(async (where: { roundId?: string; status?: BetStatus }) =>
+			state.bets.filter(
+				(b) =>
+					(!where.roundId || b.roundId === where.roundId) &&
+					(!where.status || b.status === where.status),
+			),
 		),
 		flush: vi.fn().mockResolvedValue(undefined),
 	} as unknown as BetRepo
@@ -119,6 +120,7 @@ const fakeOrm = { em: {} as EntityManager } as unknown as MikroORM
 const buildOrchestrator = (
 	ctx: OrchestratorCtx,
 	broadcaster: GameBroadcaster,
+	metrics: GameMetrics = new GameMetrics(new Registry()),
 ) =>
 	new RoundOrchestrator(
 		fakeOrm,
@@ -128,15 +130,14 @@ const buildOrchestrator = (
 		fakeProvablyFair,
 		broadcaster,
 		config,
+		metrics,
 	)
 
 import { RequestContext } from '@mikro-orm/core'
 
 const originalCreate = RequestContext.create
-RequestContext.create = ((
-	_em: EntityManager,
-	next: () => unknown,
-): unknown => next()) as typeof RequestContext.create
+RequestContext.create = ((_em: EntityManager, next: () => unknown): unknown =>
+	next()) as typeof RequestContext.create
 
 describe('RoundOrchestrator', () => {
 	beforeEach(() => {
@@ -198,7 +199,9 @@ describe('RoundOrchestrator', () => {
 	it('marks confirmed bets as LOST when the round crashes', async () => {
 		const ctx = makeCtx()
 		const broadcaster = makeBroadcaster()
-		const orch = buildOrchestrator(ctx, broadcaster)
+		const registry = new Registry()
+		const metrics = new GameMetrics(registry)
+		const orch = buildOrchestrator(ctx, broadcaster, metrics)
 
 		await orch.start()
 		const round = ctx.state.rounds[0]
@@ -222,6 +225,12 @@ describe('RoundOrchestrator', () => {
 		await vi.advanceTimersByTimeAsync(11_600)
 
 		expect(bet.status).toBe(BetStatus.LOST)
+
+		const total = await registry.getSingleMetric('crash_bets_total')?.get()
+		const lost = total?.values.find(
+			(v) => (v.labels as { status?: string }).status === 'lost',
+		)
+		expect(lost?.value).toBe(1)
 	})
 
 	it('opens a new round after the inter-round gap', async () => {

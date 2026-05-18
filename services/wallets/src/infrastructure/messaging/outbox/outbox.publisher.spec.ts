@@ -2,7 +2,9 @@ import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { RabbitPublisher } from '@infrastructure/messaging/amqp/rabbit-publisher'
 import { OutboxPublisher } from '@infrastructure/messaging/outbox/outbox.publisher'
 import { OutboxEvent } from '@infrastructure/messaging/outbox/outbox-event.entity'
+import { WalletMetrics } from '@infrastructure/observability/wallet-metrics'
 import type { MikroORM } from '@mikro-orm/core'
+import { Registry } from 'prom-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 type OutboxRepo = BaseRepository<OutboxEvent>
@@ -47,6 +49,7 @@ describe('OutboxPublisher', () => {
 			repo as unknown as OutboxRepo,
 			channel as unknown as RabbitPublisher,
 			'crash.events',
+			new WalletMetrics(new Registry()),
 		)
 
 		await publisher.drain()
@@ -69,6 +72,7 @@ describe('OutboxPublisher', () => {
 			repo as unknown as OutboxRepo,
 			channel as unknown as RabbitPublisher,
 			'crash.events',
+			new WalletMetrics(new Registry()),
 		)
 
 		await publisher.drain()
@@ -88,6 +92,7 @@ describe('OutboxPublisher', () => {
 			repo as unknown as OutboxRepo,
 			channel as unknown as RabbitPublisher,
 			'crash.events',
+			new WalletMetrics(new Registry()),
 		)
 
 		await publisher.drain()

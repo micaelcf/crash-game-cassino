@@ -7,7 +7,9 @@ import { RoundNotFlyingException } from '@domain/round/round.exceptions'
 import type { Clock } from '@domain/shared/clock'
 import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { GameMetrics } from '@infrastructure/observability/game-metrics'
 import type { GameBroadcaster } from '@infrastructure/websocket/game.gateway.interface'
+import { Registry } from 'prom-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 type RoundRepo = BaseRepository<Round>
@@ -122,6 +124,7 @@ describe('CashOutUseCase', () => {
 			ctx.events,
 			fixedClock(now),
 			ctx.broadcaster as unknown as GameBroadcaster,
+			new GameMetrics(new Registry()),
 		)
 
 		const result = await useCase.execute(new CashOutCommand('u-1'))
@@ -150,6 +153,35 @@ describe('CashOutUseCase', () => {
 		expect(ctx.flushOrder).toEqual(['flush', 'emitBetCashedOut'])
 	})
 
+	it('increments crash_bets_total{status="won"} and crash_payout_cents_sum', async () => {
+		const flyAt = new Date(1_000_000)
+		const round = newRound({ flyingStartedAt: flyAt })
+		const bet = newConfirmedBet(round.id, 1000n)
+		const ctx = makeCtx({ round, bet })
+		const registry = new Registry()
+		const metrics = new GameMetrics(registry)
+		const useCase = new CashOutUseCase(
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
+			ctx.events,
+			fixedClock(new Date(1_001_000)),
+			ctx.broadcaster as unknown as GameBroadcaster,
+			metrics,
+		)
+
+		await useCase.execute(new CashOutCommand('u-1'))
+
+		const total = await registry.getSingleMetric('crash_bets_total')?.get()
+		const won = total?.values.find(
+			(v) => (v.labels as { status?: string }).status === 'won',
+		)
+		expect(won?.value).toBe(1)
+		const payout = await registry
+			.getSingleMetric('crash_payout_cents_sum')
+			?.get()
+		expect(payout?.values[0]?.value).toBe(1060)
+	})
+
 	it('does not broadcast bet.cashed_out when the round is not FLYING', async () => {
 		const round = newRound({ status: RoundStatus.BETTING_PHASE })
 		const ctx = makeCtx({ round, bet: newConfirmedBet(round.id) })
@@ -159,6 +191,7 @@ describe('CashOutUseCase', () => {
 			ctx.events,
 			fixedClock(new Date()),
 			ctx.broadcaster as unknown as GameBroadcaster,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -176,6 +209,7 @@ describe('CashOutUseCase', () => {
 			ctx.events,
 			fixedClock(new Date()),
 			ctx.broadcaster as unknown as GameBroadcaster,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -193,6 +227,7 @@ describe('CashOutUseCase', () => {
 			ctx.events,
 			fixedClock(new Date()),
 			ctx.broadcaster as unknown as GameBroadcaster,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -209,6 +244,7 @@ describe('CashOutUseCase', () => {
 			ctx.events,
 			fixedClock(new Date()),
 			ctx.broadcaster as unknown as GameBroadcaster,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -227,6 +263,7 @@ describe('CashOutUseCase', () => {
 			ctx.events,
 			fixedClock(new Date()),
 			ctx.broadcaster as unknown as GameBroadcaster,
+			new GameMetrics(new Registry()),
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(

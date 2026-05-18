@@ -4,6 +4,8 @@ import { Wallet } from '@domain/wallet/wallet.entity'
 import type { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { WalletMetrics } from '@infrastructure/observability/wallet-metrics'
+import { Registry } from 'prom-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 type WalletRepo = BaseRepository<Wallet>
@@ -63,6 +65,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
+			new WalletMetrics(new Registry()),
 		)
 
 		await useCase.execute(
@@ -92,6 +95,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
+			new WalletMetrics(new Registry()),
 		)
 
 		await useCase.execute(
@@ -111,6 +115,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
+			new WalletMetrics(new Registry()),
 		)
 
 		await useCase.execute(
@@ -123,6 +128,30 @@ describe('DebitWalletUseCase', () => {
 		})
 	})
 
+	it('records crash_wallet_operations_total{op="debit"} on a successful debit', async () => {
+		const wallet = newWallet('player-1', 1000n)
+		const ctx = makeCtx({ wallet })
+		const registry = new Registry()
+		const useCase = new DebitWalletUseCase(
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
+			ctx.events,
+			new WalletMetrics(registry),
+		)
+
+		await useCase.execute(
+			new DebitWalletCommand('msg-m1', 'player-1', 100n, 'round-1', 'bet-1'),
+		)
+
+		const total = await registry
+			.getSingleMetric('crash_wallet_operations_total')
+			?.get()
+		const debit = total?.values.find(
+			(v) => (v.labels as { op?: string }).op === 'debit',
+		)
+		expect(debit?.value).toBe(1)
+	})
+
 	it('short-circuits when the inbox already records the messageId', async () => {
 		const wallet = newWallet('player-1', 1000n)
 		const inbox = Object.create(InboxEvent.prototype)
@@ -131,6 +160,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
+			new WalletMetrics(new Registry()),
 		)
 
 		await useCase.execute(

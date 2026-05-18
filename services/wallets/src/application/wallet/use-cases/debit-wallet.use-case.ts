@@ -4,6 +4,7 @@ import { Wallet } from '@domain/wallet/wallet.entity'
 import { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
 import { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { WalletMetrics } from '@infrastructure/observability/wallet-metrics'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Injectable } from '@nestjs/common'
 
@@ -15,6 +16,7 @@ export class DebitWalletUseCase {
 		@InjectRepository(InboxEvent)
 		private readonly inboxRepository: BaseRepository<InboxEvent>,
 		private readonly events: EventPublisher,
+		private readonly metrics: WalletMetrics,
 	) {}
 
 	async execute(command: DebitWalletCommand): Promise<void> {
@@ -36,6 +38,7 @@ export class DebitWalletUseCase {
 				reason: 'Wallet not found',
 			})
 			await this.walletRepository.flush()
+			this.metrics.recordDebitFailed()
 			return
 		}
 
@@ -49,6 +52,7 @@ export class DebitWalletUseCase {
 				amount: command.amount.toString(),
 			})
 			await this.walletRepository.flush()
+			this.metrics.recordDebit()
 		} catch (err) {
 			if (err instanceof InsufficientBalanceException) {
 				this.inboxRepository.create({ id: command.messageId })
@@ -59,6 +63,7 @@ export class DebitWalletUseCase {
 					reason: 'Insufficient balance',
 				})
 				await this.walletRepository.flush()
+				this.metrics.recordDebitFailed()
 				return
 			}
 			throw err

@@ -3,6 +3,8 @@ import { CreditWalletUseCase } from '@application/wallet/use-cases/credit-wallet
 import { Wallet } from '@domain/wallet/wallet.entity'
 import type { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
+import { WalletMetrics } from '@infrastructure/observability/wallet-metrics'
+import { Registry } from 'prom-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 type WalletRepo = BaseRepository<Wallet>
@@ -43,6 +45,7 @@ describe('CreditWalletUseCase', () => {
 		const useCase = new CreditWalletUseCase(
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
+			new WalletMetrics(new Registry()),
 		)
 
 		await useCase.execute(new CreditWalletCommand('msg-c1', 'player-1', 250n))
@@ -59,6 +62,7 @@ describe('CreditWalletUseCase', () => {
 		const useCase = new CreditWalletUseCase(
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
+			new WalletMetrics(new Registry()),
 		)
 
 		await useCase.execute(new CreditWalletCommand('msg-c1', 'player-1', 250n))
@@ -72,6 +76,7 @@ describe('CreditWalletUseCase', () => {
 		const useCase = new CreditWalletUseCase(
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
+			new WalletMetrics(new Registry()),
 		)
 
 		await useCase.execute(new CreditWalletCommand('msg-c2', 'ghost', 50n))
