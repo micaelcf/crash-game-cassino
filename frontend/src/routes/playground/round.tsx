@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { ApiError } from "#/api/http";
 import { EventLog } from "#/components/playground/EventLog";
 import { JsonView } from "#/components/playground/JsonView";
 import { PhaseBadge } from "#/components/playground/PhaseBadge";
 import { Section } from "#/components/playground/Section";
-import { useCurrentRound } from "#/queries/rounds";
+import { isApiError } from "#/lib/api/http/client";
+import { useCurrentRound } from "#/lib/application/rounds/queries";
 
 export const Route = createFileRoute("/playground/round")({
 	component: RoundSection,
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/playground/round")({
 
 function RoundSection() {
 	const round = useCurrentRound();
-	const err = round.error as ApiError | undefined;
+	const err = isApiError(round.error) ? round.error : null;
 
 	return (
 		<div className="space-y-4">

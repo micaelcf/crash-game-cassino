@@ -1,11 +1,12 @@
-import { formatCents } from "#/game/money";
+import { formatCents } from "#/lib/domain/money";
+import type { Cents } from "#/lib/domain/types";
 
 export function MoneyDisplay({
 	cents,
 	suffix = "",
 }: {
-	cents: string | bigint | null | undefined;
-	suffix?: string;
+	cents: Cents | string | null | undefined;
+	suffix?: string | undefined;
 }) {
 	return (
 		<span className="font-mono">

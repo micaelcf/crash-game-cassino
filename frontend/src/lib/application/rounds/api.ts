@@ -1,10 +1,10 @@
-import type { ApiClient } from "./http";
+import type { ApiClient } from "#/lib/api/http/client";
 import type {
 	PagedResult,
 	PaginationParams,
 	RoundDto,
 	RoundVerifyDto,
-} from "./types";
+} from "#/lib/api/types";
 
 export function getCurrentRound(client: ApiClient): Promise<RoundDto | null> {
 	return client.get<RoundDto | null>("/games/rounds/current");

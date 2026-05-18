@@ -1,19 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import type { BetDto, RoundDto } from "#/api/types";
-import { useCurrentUserSub } from "#/auth/useCurrentUserSub";
-import { qk } from "#/queries/keys";
+import type { BetDto, RoundDto } from "#/lib/api/types";
+import type { GameEvent } from "#/lib/api/ws/events";
+import { useCurrentUserSub } from "#/lib/application/auth/useCurrentUserSub";
+import { qk } from "#/lib/application/keys";
+import { useSocket } from "#/providers/SocketProvider";
 import { recordEvent } from "./eventLog";
-import type {
-	BetCancelledPayload,
-	BetCashedOutPayload,
-	BetPlacedPayload,
-	RoundBettingPayload,
-	RoundCrashedPayload,
-	RoundStartedPayload,
-} from "./events";
 import { pushNotification } from "./notifications";
-import { useSocket } from "./SocketProvider";
 
 export function useGameEvents(): void {
 	const { socket } = useSocket();
@@ -23,12 +16,16 @@ export function useGameEvents(): void {
 	useEffect(() => {
 		if (!socket) return;
 
-		const onBetting = (payload: RoundBettingPayload) => {
+		type EventHandler<T extends GameEvent["type"]> = (
+			payload: Extract<GameEvent, { type: T }>["payload"],
+		) => void;
+
+		const onBetting: EventHandler<"round.betting"> = (payload) => {
 			recordEvent({ type: "round.betting", payload });
 			queryClient.invalidateQueries({ queryKey: qk.rounds.current() });
 		};
 
-		const onStarted = (payload: RoundStartedPayload) => {
+		const onStarted: EventHandler<"round.started"> = (payload) => {
 			recordEvent({ type: "round.started", payload });
 			queryClient.setQueryData<RoundDto | null>(qk.rounds.current(), (prev) => {
 				if (!prev || prev.id !== payload.roundId) {
@@ -44,7 +41,7 @@ export function useGameEvents(): void {
 			});
 		};
 
-		const onCrashed = (payload: RoundCrashedPayload) => {
+		const onCrashed: EventHandler<"round.crashed"> = (payload) => {
 			recordEvent({ type: "round.crashed", payload });
 			queryClient.setQueryData<RoundDto | null>(qk.rounds.current(), (prev) => {
 				if (!prev || prev.id !== payload.roundId) {
@@ -68,7 +65,7 @@ export function useGameEvents(): void {
 			});
 		};
 
-		const onBetPlaced = (payload: BetPlacedPayload) => {
+		const onBetPlaced: EventHandler<"bet.placed"> = (payload) => {
 			recordEvent({ type: "bet.placed", payload });
 
 			// Late-debit race: wallet confirmed after the round already crashed.
@@ -104,36 +101,31 @@ export function useGameEvents(): void {
 			queryClient.setQueryData<RoundDto | null>(qk.rounds.current(), (prev) => {
 				if (!prev || prev.id !== payload.roundId) return prev;
 				const exists = prev.bets.some((b) => b.id === payload.betId);
-				const next: BetDto = exists
-					? (prev.bets
-							.map((b) =>
-								b.id === payload.betId
-									? ({
-											...b,
-											status: "CONFIRMED",
-										} satisfies BetDto)
-									: b,
-							)
-							.find((b) => b.id === payload.betId) ?? prev.bets[0])
-					: {
-							id: payload.betId,
-							userId: payload.userId,
-							username: payload.username,
-							amountCents: payload.amountCents,
-							status: "CONFIRMED",
-							cashoutMultiplierHundredths: null,
-							payoutCents: null,
-							createdAt: new Date().toISOString(),
-						};
-				const merged = exists
-					? prev.bets.map((b) => (b.id === payload.betId ? next : b))
-					: [...prev.bets, next];
+				const merged: BetDto[] = exists
+					? prev.bets.map((b) =>
+							b.id === payload.betId
+								? ({ ...b, status: "CONFIRMED" } satisfies BetDto)
+								: b,
+						)
+					: [
+							...prev.bets,
+							{
+								id: payload.betId,
+								userId: payload.userId,
+								username: payload.username,
+								amountCents: payload.amountCents,
+								status: "CONFIRMED",
+								cashoutMultiplierHundredths: null,
+								payoutCents: null,
+								createdAt: new Date().toISOString(),
+							},
+						];
 				return { ...prev, bets: merged };
 			});
 			queryClient.invalidateQueries({ queryKey: qk.wallet.me() });
 		};
 
-		const onBetCashedOut = (payload: BetCashedOutPayload) => {
+		const onBetCashedOut: EventHandler<"bet.cashed_out"> = (payload) => {
 			recordEvent({ type: "bet.cashed_out", payload });
 			queryClient.setQueryData<RoundDto | null>(qk.rounds.current(), (prev) => {
 				if (!prev || prev.id !== payload.roundId) return prev;
@@ -158,7 +150,7 @@ export function useGameEvents(): void {
 			});
 		};
 
-		const onBetCancelled = (payload: BetCancelledPayload) => {
+		const onBetCancelled: EventHandler<"bet.cancelled"> = (payload) => {
 			recordEvent({ type: "bet.cancelled", payload });
 			queryClient.setQueryData<RoundDto | null>(qk.rounds.current(), (prev) => {
 				if (!prev || prev.id !== payload.roundId) return prev;

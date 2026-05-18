@@ -1,7 +1,7 @@
-import { BET_MAX_CENTS, BET_MIN_CENTS } from "./types";
+import { BET_MAX_CENTS, BET_MIN_CENTS, Cents } from "./types";
 
 export type ParseAmountResult =
-	| { ok: true; cents: bigint }
+	| { ok: true; cents: Cents }
 	| { ok: false; reason: ParseAmountErrorReason };
 
 export type ParseAmountErrorReason =
@@ -28,10 +28,10 @@ export function parseAmountToCents(input: string): ParseAmountResult {
 	if (cents < BET_MIN_CENTS || cents > BET_MAX_CENTS) {
 		return { ok: false, reason: "out-of-range" };
 	}
-	return { ok: true, cents };
+	return { ok: true, cents: Cents(cents) };
 }
 
-export function formatCents(cents: string | bigint | null | undefined): string {
+export function formatCents(cents: Cents | string | null | undefined): string {
 	if (cents === null || cents === undefined) return "—";
 	const raw = typeof cents === "bigint" ? cents : BigInt(cents);
 	const negative = raw < 0n;

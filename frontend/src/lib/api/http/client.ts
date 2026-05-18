@@ -20,6 +20,10 @@ export class ApiError extends Error {
 	}
 }
 
+export function isApiError(value: unknown): value is ApiError {
+	return value instanceof ApiError;
+}
+
 export interface ApiClient {
 	get<T>(path: string, init?: RequestInit): Promise<T>;
 	post<T>(path: string, body?: unknown, init?: RequestInit): Promise<T>;
@@ -50,17 +54,19 @@ export function createApiClient({
 			throw new ApiError(res.status, body, message);
 		}
 
+		// NOTE: boundary cast — `body` is parsed JSON (`unknown`); the caller
+		// declares the expected shape via the generic <T>. No runtime validator
+		// is layered here yet; trust the DTO contract with the backend.
 		return body as T;
 	};
 
 	return {
 		get: (path, init = {}) => request(path, { ...init, method: "GET" }),
-		post: (path, body, init = {}) =>
-			request(path, {
-				...init,
-				method: "POST",
-				body: body === undefined ? undefined : JSON.stringify(body),
-			}),
+		post: (path, body, init = {}) => {
+			const next: RequestInit = { ...init, method: "POST" };
+			if (body !== undefined) next.body = JSON.stringify(body);
+			return request(path, next);
+		},
 	};
 }
 

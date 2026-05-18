@@ -1,6 +1,6 @@
 import { useLogto } from "@logto/react";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { getCallbackUrl } from "#/auth/logto-config";
+import { getCallbackUrl } from "#/lib/application/auth/config";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
 

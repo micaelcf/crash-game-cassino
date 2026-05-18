@@ -1,13 +1,7 @@
 import { useLogto } from "@logto/react";
 import { useMemo } from "react";
 import { env } from "#/env";
-import { type ApiClient, createApiClient } from "./http";
-
-export * as bets from "./bets";
-export * from "./http";
-export * as rounds from "./rounds";
-export * from "./types";
-export * as wallets from "./wallets";
+import { type ApiClient, createApiClient } from "#/lib/api/http/client";
 
 export function useApiClient(): ApiClient {
 	const { getAccessToken, isAuthenticated } = useLogto();

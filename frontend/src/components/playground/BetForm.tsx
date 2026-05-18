@@ -1,7 +1,7 @@
 import { type FormEventHandler, useState } from "react";
-import type { ApiError } from "#/api/http";
-import { parseAmountToCents } from "#/game/money";
-import { usePlaceBetMutation } from "#/queries/bets";
+import { isApiError } from "#/lib/api/http/client";
+import { usePlaceBetMutation } from "#/lib/application/bets/queries";
+import { parseAmountToCents } from "#/lib/domain/money";
 import { Field } from "./Field";
 
 export function BetForm({ disabled }: { disabled?: boolean }) {
@@ -20,7 +20,7 @@ export function BetForm({ disabled }: { disabled?: boolean }) {
 		mutation.mutate({ amountCents: parsed.cents });
 	};
 
-	const serverError = mutation.error as ApiError | undefined;
+	const serverError = isApiError(mutation.error) ? mutation.error : null;
 
 	return (
 		<form onSubmit={onSubmit} className="space-y-3">

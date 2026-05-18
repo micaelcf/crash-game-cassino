@@ -1,6 +1,6 @@
 import { useHandleSignInCallback } from "@logto/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { POST_SIGN_IN_REDIRECT } from "#/auth/logto-config";
+import { POST_SIGN_IN_REDIRECT } from "#/lib/application/auth/config";
 
 export const Route = createFileRoute("/callback")({ component: CallbackPage });
 

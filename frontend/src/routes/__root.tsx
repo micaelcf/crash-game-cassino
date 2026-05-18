@@ -7,12 +7,12 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
-import { AuthProvider } from "#/auth/AuthProvider";
 import { getLocale } from "#/paraglide/runtime";
-import { SocketProvider } from "#/realtime/SocketProvider";
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import TanstackQueryProvider from "../integrations/tanstack-query/root-provider";
-import appCss from "../styles.css?url";
+import { AuthProvider } from "#/providers/AuthProvider";
+import TanStackQueryDevtools from "#/providers/QueryDevtools";
+import TanstackQueryProvider from "#/providers/QueryProvider";
+import { SocketProvider } from "#/providers/SocketProvider";
+import appCss from "#/styles.css?url";
 
 interface MyRouterContext {
 	queryClient: QueryClient;

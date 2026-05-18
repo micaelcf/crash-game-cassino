@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { rounds, useApiClient } from "#/api";
-import { qk } from "./keys";
+import { useApiClient } from "#/lib/application/api-client";
+import { qk } from "#/lib/application/keys";
+import { getCurrentRound, getRoundHistory, verifyRound } from "./api";
 
 export function useCurrentRound() {
 	const api = useApiClient();
 	return useQuery({
 		queryKey: qk.rounds.current(),
-		queryFn: () => rounds.getCurrentRound(api),
+		queryFn: () => getCurrentRound(api),
 		refetchInterval: false,
 	});
 }
@@ -21,7 +22,7 @@ export function useRoundHistory({
 	const api = useApiClient();
 	return useQuery({
 		queryKey: qk.rounds.history(page, pageSize),
-		queryFn: () => rounds.getRoundHistory(api, { page, pageSize }),
+		queryFn: () => getRoundHistory(api, { page, pageSize }),
 	});
 }
 
@@ -29,7 +30,13 @@ export function useVerifyRound(roundId: string | undefined) {
 	const api = useApiClient();
 	return useQuery({
 		queryKey: qk.rounds.verify(roundId ?? ""),
-		queryFn: () => rounds.verifyRound(api, roundId as string),
+		queryFn: () => {
+			if (!roundId) {
+				// `enabled` gate prevents this from running; guard appeases the type.
+				throw new Error("roundId is required");
+			}
+			return verifyRound(api, roundId);
+		},
 		enabled: Boolean(roundId),
 		retry: false,
 	});

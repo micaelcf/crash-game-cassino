@@ -1,10 +1,13 @@
 import { type IdTokenClaims, useLogto } from "@logto/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getCallbackUrl, getPostSignOutUrl } from "#/auth/logto-config";
 import { JsonView } from "#/components/playground/JsonView";
 import { Section } from "#/components/playground/Section";
 import { env } from "#/env";
+import {
+	getCallbackUrl,
+	getPostSignOutUrl,
+} from "#/lib/application/auth/config";
 
 export const Route = createFileRoute("/playground/auth")({
 	component: AuthSection,
@@ -32,7 +35,7 @@ function AuthSection() {
 			const t = await getAccessToken(env.VITE_LOGTO_RESOURCE);
 			setToken(t);
 		} catch (err) {
-			setTokenErr((err as Error).message);
+			setTokenErr(err instanceof Error ? err.message : String(err));
 		}
 	};
 

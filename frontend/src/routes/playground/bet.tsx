@@ -1,16 +1,16 @@
 import { useLogto } from "@logto/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useRequireAuth } from "#/auth/useRequireAuth";
 import { BetForm } from "#/components/playground/BetForm";
 import { CashOutButton } from "#/components/playground/CashOutButton";
 import { JsonView } from "#/components/playground/JsonView";
 import { MultiplierDisplay } from "#/components/playground/MultiplierDisplay";
 import { PhaseBadge } from "#/components/playground/PhaseBadge";
 import { Section } from "#/components/playground/Section";
-import { computeClockOffset } from "#/game/clock";
-import { formatCents } from "#/game/money";
-import { useCurrentRound } from "#/queries/rounds";
+import { useRequireAuth } from "#/lib/application/auth/useRequireAuth";
+import { useCurrentRound } from "#/lib/application/rounds/queries";
+import { computeClockOffset } from "#/lib/domain/clock";
+import { formatCents } from "#/lib/domain/money";
 
 export const Route = createFileRoute("/playground/bet")({
 	component: BetSection,

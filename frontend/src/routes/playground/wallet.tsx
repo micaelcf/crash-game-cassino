@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { ApiError } from "#/api/http";
 import { JsonView } from "#/components/playground/JsonView";
 import { MoneyDisplay } from "#/components/playground/MoneyDisplay";
 import { Section } from "#/components/playground/Section";
-import { useCreateWalletMutation, useMyWallet } from "#/queries/wallet";
+import { isApiError } from "#/lib/api/http/client";
+import {
+	useCreateWalletMutation,
+	useMyWallet,
+} from "#/lib/application/wallet/queries";
 
 export const Route = createFileRoute("/playground/wallet")({
 	component: WalletSection,
@@ -12,8 +15,8 @@ export const Route = createFileRoute("/playground/wallet")({
 function WalletSection() {
 	const wallet = useMyWallet();
 	const create = useCreateWalletMutation();
-	const walletError = wallet.error as ApiError | undefined;
-	const createError = create.error as ApiError | undefined;
+	const walletError = isApiError(wallet.error) ? wallet.error : null;
+	const createError = isApiError(create.error) ? create.error : null;
 
 	return (
 		<div className="space-y-4">

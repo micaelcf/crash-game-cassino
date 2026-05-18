@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { JsonView } from "#/components/playground/JsonView";
 import { Section } from "#/components/playground/Section";
-import { useMyBets } from "#/queries/bets";
-import { useRoundHistory } from "#/queries/rounds";
+import { useMyBets } from "#/lib/application/bets/queries";
+import { useRoundHistory } from "#/lib/application/rounds/queries";
 
 export const Route = createFileRoute("/playground/history")({
 	component: HistorySection,

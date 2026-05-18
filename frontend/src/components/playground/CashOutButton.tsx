@@ -1,9 +1,9 @@
-import type { ApiError } from "#/api/http";
-import { useCashOutMutation } from "#/queries/bets";
+import { isApiError } from "#/lib/api/http/client";
+import { useCashOutMutation } from "#/lib/application/bets/queries";
 
 export function CashOutButton({ disabled }: { disabled: boolean }) {
 	const mutation = useCashOutMutation();
-	const error = mutation.error as ApiError | undefined;
+	const error = isApiError(mutation.error) ? mutation.error : null;
 
 	return (
 		<div className="space-y-1">

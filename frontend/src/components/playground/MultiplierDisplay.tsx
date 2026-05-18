@@ -1,12 +1,12 @@
 import { useRef } from "react";
-import { useMultiplierLoop } from "#/game/multiplier";
+import { useMultiplierLoop } from "#/lib/domain/multiplier";
 
 export interface MultiplierDisplayProps {
 	startTimeMs: number | null;
 	growthRate: number | null;
 	running: boolean;
-	clockOffsetMs?: number;
-	frozenAtHundredths?: number | null;
+	clockOffsetMs?: number | undefined;
+	frozenAtHundredths?: number | null | undefined;
 }
 
 export function MultiplierDisplay({

@@ -18,5 +18,7 @@ export function getPostSignOutUrl(): string {
 export const logtoConfig: LogtoConfig = {
 	endpoint: env.VITE_LOGTO_ENDPOINT,
 	appId: env.VITE_LOGTO_APP_ID,
-	resources: env.VITE_LOGTO_RESOURCE ? [env.VITE_LOGTO_RESOURCE] : undefined,
+	...(env.VITE_LOGTO_RESOURCE
+		? { resources: [env.VITE_LOGTO_RESOURCE] as [string, ...string[]] }
+		: {}),
 };

@@ -1,7 +1,7 @@
 import {
 	dismissNotification,
 	useNotifications,
-} from "#/realtime/notifications";
+} from "#/lib/application/realtime/notifications";
 
 const TONE = {
 	info: "border-sky-500 bg-sky-500/10 text-sky-100",

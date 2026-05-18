@@ -1,5 +1,5 @@
-import type { ApiClient } from "./http";
-import type { WalletDto } from "./types";
+import type { ApiClient } from "#/lib/api/http/client";
+import type { WalletDto } from "#/lib/api/types";
 
 export function createWallet(client: ApiClient): Promise<WalletDto> {
 	return client.post<WalletDto>("/wallets");

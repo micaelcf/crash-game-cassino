@@ -1,8 +1,8 @@
 import { type IdTokenClaims, useLogto } from "@logto/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getPostSignOutUrl } from "#/auth/logto-config";
-import { useRequireAuth } from "#/auth/useRequireAuth";
+import { getPostSignOutUrl } from "#/lib/application/auth/config";
+import { useRequireAuth } from "#/lib/application/auth/useRequireAuth";
 
 export const Route = createFileRoute("/dashboard")({
 	component: DashboardPage,

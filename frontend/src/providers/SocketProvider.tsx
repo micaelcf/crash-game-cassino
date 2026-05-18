@@ -8,14 +8,13 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { Socket } from "socket.io-client";
 import { env } from "#/env";
-import { createGameSocket } from "./socket";
+import { createGameSocket, type GameSocket } from "#/lib/api/ws/client";
 
 export type SocketStatus = "idle" | "connecting" | "connected" | "disconnected";
 
 interface SocketContextValue {
-	socket: Socket | null;
+	socket: GameSocket | null;
 	status: SocketStatus;
 }
 
@@ -40,7 +39,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 		}
 	};
 
-	const [socket] = useState<Socket | null>(() => {
+	const [socket] = useState<GameSocket | null>(() => {
 		if (typeof window === "undefined") return null;
 		return createGameSocket({
 			url: env.VITE_WS_URL,

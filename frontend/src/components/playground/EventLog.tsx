@@ -1,4 +1,7 @@
-import { clearEventLog, useEventLog } from "#/realtime/eventLog";
+import {
+	clearEventLog,
+	useEventLog,
+} from "#/lib/application/realtime/eventLog";
 
 export function EventLog() {
 	const events = useEventLog();

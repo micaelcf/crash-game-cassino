@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import type { ApiError } from "#/api/http";
-import type { RoundVerifyDto } from "#/api/types";
 import { Field } from "#/components/playground/Field";
 import { JsonView } from "#/components/playground/JsonView";
 import { Section } from "#/components/playground/Section";
-import { useVerifyRound } from "#/queries/rounds";
+import { isApiError } from "#/lib/api/http/client";
+import type { RoundVerifyDto } from "#/lib/api/types";
+import { useVerifyRound } from "#/lib/application/rounds/queries";
 
 export const Route = createFileRoute("/playground/verify")({
 	component: VerifySection,
@@ -24,7 +24,7 @@ function VerifySection() {
 	const verify = useVerifyRound(submittedId);
 	const [result, setResult] = useState<VerifyResult | null>(null);
 	const [verifyError, setVerifyError] = useState<string | null>(null);
-	const err = verify.error as ApiError | undefined;
+	const err = isApiError(verify.error) ? verify.error : null;
 
 	const run = async () => {
 		setVerifyError(null);
@@ -34,7 +34,7 @@ function VerifySection() {
 			const r = await computeVerification(verify.data);
 			setResult(r);
 		} catch (e) {
-			setVerifyError((e as Error).message);
+			setVerifyError(e instanceof Error ? e.message : String(e));
 		}
 	};
 

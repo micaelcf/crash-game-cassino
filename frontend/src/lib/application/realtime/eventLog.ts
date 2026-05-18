@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { GameEvent } from "./events";
+import type { GameEvent } from "#/lib/api/ws/events";
 
 export type LoggedEvent = GameEvent & { at: number };
 

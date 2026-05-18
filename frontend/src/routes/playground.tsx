@@ -4,8 +4,8 @@ import { Notifications } from "#/components/playground/Notifications";
 import { PhaseBadge } from "#/components/playground/PhaseBadge";
 import { PlaygroundNav } from "#/components/playground/PlaygroundNav";
 import { SocketStatus } from "#/components/playground/SocketStatus";
-import { useCurrentRound } from "#/queries/rounds";
-import { useGameEvents } from "#/realtime/useGameEvents";
+import { useGameEvents } from "#/lib/application/realtime/useGameEvents";
+import { useCurrentRound } from "#/lib/application/rounds/queries";
 
 export const Route = createFileRoute("/playground")({
 	component: PlaygroundLayout,

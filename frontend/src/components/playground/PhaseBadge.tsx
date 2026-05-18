@@ -1,4 +1,4 @@
-import type { RoundStatus } from "#/api/types";
+import type { RoundStatus } from "#/lib/api/types";
 import { Pill } from "./AuthStatus";
 
 export function PhaseBadge({ phase }: { phase: RoundStatus | undefined }) {

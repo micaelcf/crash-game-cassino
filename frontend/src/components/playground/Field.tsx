@@ -7,8 +7,8 @@ export function Field({
 	children,
 }: {
 	label: string;
-	hint?: string;
-	error?: string;
+	hint?: string | undefined;
+	error?: string | undefined;
 	children: (props: { id: string }) => ReactNode;
 }) {
 	const id = useId();

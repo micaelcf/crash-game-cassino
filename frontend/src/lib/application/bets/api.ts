@@ -1,19 +1,20 @@
-import type { ApiClient } from "./http";
+import type { ApiClient } from "#/lib/api/http/client";
 import type {
 	BetDto,
 	PagedResult,
 	PaginationParams,
 	PlaceBetBody,
-} from "./types";
+} from "#/lib/api/types";
+import type { Cents } from "#/lib/domain/types";
 
 export function placeBet(
 	client: ApiClient,
-	{ amountCents }: PlaceBetBody,
+	body: { amountCents: Cents },
 ): Promise<BetDto> {
+	// Backend field name is `amount` (string-cents), not `amountCents`.
 	return client.post<BetDto>("/games/bet", {
-		amount:
-			typeof amountCents === "bigint" ? amountCents.toString() : amountCents,
-	});
+		amount: body.amountCents.toString(),
+	} satisfies PlaceBetBody);
 }
 
 export function cashOut(client: ApiClient): Promise<BetDto> {

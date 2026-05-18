@@ -1,4 +1,4 @@
-import { useSocket } from "#/realtime/SocketProvider";
+import { useSocket } from "#/providers/SocketProvider";
 import { Pill } from "./AuthStatus";
 
 export function SocketStatus() {
