@@ -4,5 +4,6 @@ export class DebitWalletCommand {
 		public readonly userId: string,
 		public readonly amount: bigint,
 		public readonly roundId: string,
+		public readonly betId: string,
 	) {}
 }

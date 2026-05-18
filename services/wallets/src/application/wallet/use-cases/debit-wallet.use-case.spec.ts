@@ -66,7 +66,7 @@ describe('DebitWalletUseCase', () => {
 		)
 
 		await useCase.execute(
-			new DebitWalletCommand('msg-1', 'player-1', 300n, 'round-1'),
+			new DebitWalletCommand('msg-1', 'player-1', 300n, 'round-1', 'bet-1'),
 		)
 
 		expect(wallet.balance).toBe(700n)
@@ -75,7 +75,12 @@ describe('DebitWalletUseCase', () => {
 		expect(ctx.published).toHaveLength(1)
 		expect(ctx.published[0]).toEqual({
 			eventType: 'wallet.debited',
-			payload: { userId: 'player-1', roundId: 'round-1', amount: '300' },
+			payload: {
+				userId: 'player-1',
+				roundId: 'round-1',
+				betId: 'bet-1',
+				amount: '300',
+			},
 		})
 		expect(ctx.walletRepo.flush).toHaveBeenCalledOnce()
 	})
@@ -90,13 +95,13 @@ describe('DebitWalletUseCase', () => {
 		)
 
 		await useCase.execute(
-			new DebitWalletCommand('msg-2', 'player-1', 300n, 'round-2'),
+			new DebitWalletCommand('msg-2', 'player-1', 300n, 'round-2', 'bet-2'),
 		)
 
 		expect(wallet.balance).toBe(100n)
 		expect(ctx.published[0]).toMatchObject({
 			eventType: 'wallet.debit_failed',
-			payload: { reason: 'Insufficient balance' },
+			payload: { reason: 'Insufficient balance', betId: 'bet-2' },
 		})
 	})
 
@@ -109,12 +114,12 @@ describe('DebitWalletUseCase', () => {
 		)
 
 		await useCase.execute(
-			new DebitWalletCommand('msg-3', 'ghost', 50n, 'round-3'),
+			new DebitWalletCommand('msg-3', 'ghost', 50n, 'round-3', 'bet-3'),
 		)
 
 		expect(ctx.published[0]).toMatchObject({
 			eventType: 'wallet.debit_failed',
-			payload: { reason: 'Wallet not found' },
+			payload: { reason: 'Wallet not found', betId: 'bet-3' },
 		})
 	})
 
@@ -129,7 +134,7 @@ describe('DebitWalletUseCase', () => {
 		)
 
 		await useCase.execute(
-			new DebitWalletCommand('msg-1', 'player-1', 300n, 'round-1'),
+			new DebitWalletCommand('msg-1', 'player-1', 300n, 'round-1', 'bet-dup'),
 		)
 
 		expect(wallet.balance).toBe(1000n)

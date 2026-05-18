@@ -32,6 +32,7 @@ export class DebitWalletUseCase {
 			this.events.publish('wallet.debit_failed', 'Wallet', command.userId, {
 				userId: command.userId,
 				roundId: command.roundId,
+				betId: command.betId,
 				reason: 'Wallet not found',
 			})
 			await this.walletRepository.flush()
@@ -44,6 +45,7 @@ export class DebitWalletUseCase {
 			this.events.publish('wallet.debited', 'Wallet', wallet.id, {
 				userId: command.userId,
 				roundId: command.roundId,
+				betId: command.betId,
 				amount: command.amount.toString(),
 			})
 			await this.walletRepository.flush()
@@ -53,6 +55,7 @@ export class DebitWalletUseCase {
 				this.events.publish('wallet.debit_failed', 'Wallet', wallet.id, {
 					userId: command.userId,
 					roundId: command.roundId,
+					betId: command.betId,
 					reason: 'Insufficient balance',
 				})
 				await this.walletRepository.flush()
