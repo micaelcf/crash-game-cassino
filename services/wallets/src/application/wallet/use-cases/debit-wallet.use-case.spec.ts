@@ -1,9 +1,13 @@
 import { DebitWalletCommand } from '@application/wallet/dtos/debit-wallet.command'
 import { DebitWalletUseCase } from '@application/wallet/use-cases/debit-wallet.use-case'
 import { Wallet } from '@domain/wallet/wallet.entity'
+import type { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+type WalletRepo = BaseRepository<Wallet>
+type InboxRepo = BaseRepository<InboxEvent>
 
 const newWallet = (playerId: string, balance: bigint): Wallet => {
 	const w = Object.create(Wallet.prototype) as Wallet
@@ -33,10 +37,17 @@ const makeCtx = (
 			return i
 		}),
 	}
-	const events: EventPublisher = {
-		publish: vi.fn((eventType, _aggregateType, _aggregateId, payload) => {
-			published.push({ eventType, payload })
-		}),
+	const events = {
+		publish: vi.fn(
+			(
+				eventType: string,
+				_aggregateType: string,
+				_aggregateId: string,
+				payload: Record<string, unknown>,
+			) => {
+				published.push({ eventType, payload })
+			},
+		),
 	} as unknown as EventPublisher
 
 	return { walletRepo, inboxRepo, events, inboxCreated, published }
@@ -49,8 +60,8 @@ describe('DebitWalletUseCase', () => {
 		const wallet = newWallet('player-1', 1000n)
 		const ctx = makeCtx({ wallet })
 		const useCase = new DebitWalletUseCase(
-			ctx.walletRepo as any,
-			ctx.inboxRepo as any,
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 		)
 
@@ -73,8 +84,8 @@ describe('DebitWalletUseCase', () => {
 		const wallet = newWallet('player-1', 100n)
 		const ctx = makeCtx({ wallet })
 		const useCase = new DebitWalletUseCase(
-			ctx.walletRepo as any,
-			ctx.inboxRepo as any,
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 		)
 
@@ -92,8 +103,8 @@ describe('DebitWalletUseCase', () => {
 	it('publishes wallet.debit_failed when wallet is missing', async () => {
 		const ctx = makeCtx({ wallet: null })
 		const useCase = new DebitWalletUseCase(
-			ctx.walletRepo as any,
-			ctx.inboxRepo as any,
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 		)
 
@@ -112,8 +123,8 @@ describe('DebitWalletUseCase', () => {
 		const inbox = Object.create(InboxEvent.prototype)
 		const ctx = makeCtx({ wallet, inbox })
 		const useCase = new DebitWalletUseCase(
-			ctx.walletRepo as any,
-			ctx.inboxRepo as any,
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 		)
 

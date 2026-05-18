@@ -5,8 +5,14 @@ import { NoActiveBetException } from '@domain/bet/bet.exceptions'
 import { Round, RoundStatus } from '@domain/round/round.entity'
 import { RoundNotFlyingException } from '@domain/round/round.exceptions'
 import type { Clock } from '@domain/shared/clock'
+import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import type { GameBroadcaster } from '@infrastructure/websocket/game.gateway.interface'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+type RoundRepo = BaseRepository<Round>
+type BetRepo = BaseRepository<Bet>
+type EventRecord = { eventType: string; payload: Record<string, unknown> }
 
 const fixedClock = (now: Date): Clock => ({ now: () => now })
 
@@ -52,7 +58,7 @@ const newConfirmedBet = (roundId: string, amount: bigint = 1000n): Bet => {
 const makeCtx = (opts: { round: Round | null; bet: Bet | null }) => {
 	const flushCalls = { count: 0 }
 	const flushOrder: string[] = []
-	const published: Array<{ eventType: string; payload: any }> = []
+	const published: EventRecord[] = []
 	const rounds = {
 		findOne: vi.fn().mockResolvedValue(opts.round),
 		findAll: vi.fn().mockResolvedValue(opts.round ? [opts.round] : []),
@@ -68,10 +74,17 @@ const makeCtx = (opts: { round: Round | null; bet: Bet | null }) => {
 			flushOrder.push('flush')
 		}),
 	}
-	const events: EventPublisher = {
-		publish: vi.fn((eventType, _at, _aid, payload) => {
-			published.push({ eventType, payload })
-		}),
+	const events = {
+		publish: vi.fn(
+			(
+				eventType: string,
+				_at: string,
+				_aid: string,
+				payload: Record<string, unknown>,
+			) => {
+				published.push({ eventType, payload })
+			},
+		),
 	} as unknown as EventPublisher
 	const broadcaster = {
 		emitRoundBetting: vi.fn(),
@@ -104,11 +117,11 @@ describe('CashOutUseCase', () => {
 		const ctx = makeCtx({ round, bet })
 		const now = new Date(1_001_000)
 		const useCase = new CashOutUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 			fixedClock(now),
-			ctx.broadcaster as any,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		const result = await useCase.execute(new CashOutCommand('u-1'))
@@ -141,11 +154,11 @@ describe('CashOutUseCase', () => {
 		const round = newRound({ status: RoundStatus.BETTING_PHASE })
 		const ctx = makeCtx({ round, bet: newConfirmedBet(round.id) })
 		const useCase = new CashOutUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 			fixedClock(new Date()),
-			ctx.broadcaster as any,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -158,11 +171,11 @@ describe('CashOutUseCase', () => {
 		const round = newRound()
 		const ctx = makeCtx({ round, bet: null })
 		const useCase = new CashOutUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 			fixedClock(new Date()),
-			ctx.broadcaster as any,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -175,11 +188,11 @@ describe('CashOutUseCase', () => {
 		const round = newRound({ status: RoundStatus.BETTING_PHASE })
 		const ctx = makeCtx({ round, bet: newConfirmedBet(round.id) })
 		const useCase = new CashOutUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 			fixedClock(new Date()),
-			ctx.broadcaster as any,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -191,11 +204,11 @@ describe('CashOutUseCase', () => {
 		const round = newRound()
 		const ctx = makeCtx({ round, bet: null })
 		const useCase = new CashOutUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 			fixedClock(new Date()),
-			ctx.broadcaster as any,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(
@@ -206,14 +219,14 @@ describe('CashOutUseCase', () => {
 	it('rejects when the bet is not in CONFIRMED state', async () => {
 		const round = newRound()
 		const bet = newConfirmedBet(round.id)
-		;(bet as any).status = BetStatus.PENDING
+		;(bet as { status: BetStatus }).status = BetStatus.PENDING
 		const ctx = makeCtx({ round, bet })
 		const useCase = new CashOutUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 			fixedClock(new Date()),
-			ctx.broadcaster as any,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await expect(useCase.execute(new CashOutCommand('u-1'))).rejects.toThrow(

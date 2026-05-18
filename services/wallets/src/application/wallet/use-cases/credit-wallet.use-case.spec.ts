@@ -1,8 +1,12 @@
 import { CreditWalletCommand } from '@application/wallet/dtos/credit-wallet.command'
 import { CreditWalletUseCase } from '@application/wallet/use-cases/credit-wallet.use-case'
 import { Wallet } from '@domain/wallet/wallet.entity'
+import type { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+type WalletRepo = BaseRepository<Wallet>
+type InboxRepo = BaseRepository<InboxEvent>
 
 const newWallet = (playerId: string, balance: bigint): Wallet => {
 	const w = Object.create(Wallet.prototype) as Wallet
@@ -37,8 +41,8 @@ describe('CreditWalletUseCase', () => {
 		const wallet = newWallet('player-1', 500n)
 		const ctx = makeCtx({ wallet })
 		const useCase = new CreditWalletUseCase(
-			ctx.walletRepo as any,
-			ctx.inboxRepo as any,
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
 		)
 
 		await useCase.execute(new CreditWalletCommand('msg-c1', 'player-1', 250n))
@@ -53,8 +57,8 @@ describe('CreditWalletUseCase', () => {
 		const inbox = Object.create(InboxEvent.prototype)
 		const ctx = makeCtx({ wallet, inbox })
 		const useCase = new CreditWalletUseCase(
-			ctx.walletRepo as any,
-			ctx.inboxRepo as any,
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
 		)
 
 		await useCase.execute(new CreditWalletCommand('msg-c1', 'player-1', 250n))
@@ -66,8 +70,8 @@ describe('CreditWalletUseCase', () => {
 	it('no-ops when wallet is missing', async () => {
 		const ctx = makeCtx({ wallet: null })
 		const useCase = new CreditWalletUseCase(
-			ctx.walletRepo as any,
-			ctx.inboxRepo as any,
+			ctx.walletRepo as unknown as WalletRepo,
+			ctx.inboxRepo as unknown as InboxRepo,
 		)
 
 		await useCase.execute(new CreditWalletCommand('msg-c2', 'ghost', 50n))

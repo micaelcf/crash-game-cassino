@@ -3,8 +3,13 @@ import { WalletDebitedCommand } from '@application/bet/dtos/wallet-debited.comma
 import { WalletDebitFailedUseCase } from '@application/bet/use-cases/wallet-debit-failed.use-case'
 import { WalletDebitedUseCase } from '@application/bet/use-cases/wallet-debited.use-case'
 import { Bet, BetStatus } from '@domain/bet/bet.entity'
+import type { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
+import type { GameBroadcaster } from '@infrastructure/websocket/game.gateway.interface'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+type BetRepo = BaseRepository<Bet>
+type InboxRepo = BaseRepository<InboxEvent>
 
 const newPendingBet = (id = 'bet-1'): Bet => {
 	const b = Object.create(Bet.prototype) as Bet
@@ -25,7 +30,7 @@ const newPendingBet = (id = 'bet-1'): Bet => {
 }
 
 const makeCtx = (opts: { bet?: Bet | null; inbox?: InboxEvent | null }) => {
-	const created: any[] = []
+	const created: InboxEvent[] = []
 	const flushCalls = { count: 0 }
 	const flushOrder: string[] = []
 	const emitOrder: string[] = []
@@ -77,9 +82,9 @@ describe('WalletDebitedUseCase', () => {
 		const bet = newPendingBet()
 		const ctx = makeCtx({ bet })
 		const useCase = new WalletDebitedUseCase(
-			ctx.bets as any,
-			ctx.inbox as any,
-			ctx.broadcaster as any,
+			ctx.bets as unknown as BetRepo,
+			ctx.inbox as unknown as InboxRepo,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await useCase.execute(new WalletDebitedCommand('msg-1', bet.id))
@@ -103,9 +108,9 @@ describe('WalletDebitedUseCase', () => {
 		const inbox = Object.create(InboxEvent.prototype)
 		const ctx = makeCtx({ bet, inbox })
 		const useCase = new WalletDebitedUseCase(
-			ctx.bets as any,
-			ctx.inbox as any,
-			ctx.broadcaster as any,
+			ctx.bets as unknown as BetRepo,
+			ctx.inbox as unknown as InboxRepo,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await useCase.execute(new WalletDebitedCommand('msg-1', bet.id))
@@ -118,9 +123,9 @@ describe('WalletDebitedUseCase', () => {
 	it('still records the inbox dedupe when the bet has vanished and does not broadcast bet.placed', async () => {
 		const ctx = makeCtx({ bet: null })
 		const useCase = new WalletDebitedUseCase(
-			ctx.bets as any,
-			ctx.inbox as any,
-			ctx.broadcaster as any,
+			ctx.bets as unknown as BetRepo,
+			ctx.inbox as unknown as InboxRepo,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await useCase.execute(new WalletDebitedCommand('msg-2', 'ghost'))
@@ -138,9 +143,9 @@ describe('WalletDebitFailedUseCase', () => {
 		const bet = newPendingBet()
 		const ctx = makeCtx({ bet })
 		const useCase = new WalletDebitFailedUseCase(
-			ctx.bets as any,
-			ctx.inbox as any,
-			ctx.broadcaster as any,
+			ctx.bets as unknown as BetRepo,
+			ctx.inbox as unknown as InboxRepo,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await useCase.execute(
@@ -165,9 +170,9 @@ describe('WalletDebitFailedUseCase', () => {
 		const inbox = Object.create(InboxEvent.prototype)
 		const ctx = makeCtx({ bet, inbox })
 		const useCase = new WalletDebitFailedUseCase(
-			ctx.bets as any,
-			ctx.inbox as any,
-			ctx.broadcaster as any,
+			ctx.bets as unknown as BetRepo,
+			ctx.inbox as unknown as InboxRepo,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await useCase.execute(new WalletDebitFailedCommand('msg-x', bet.id, 'r'))
@@ -180,9 +185,9 @@ describe('WalletDebitFailedUseCase', () => {
 	it('does not broadcast bet.cancelled when the bet has vanished', async () => {
 		const ctx = makeCtx({ bet: null })
 		const useCase = new WalletDebitFailedUseCase(
-			ctx.bets as any,
-			ctx.inbox as any,
-			ctx.broadcaster as any,
+			ctx.bets as unknown as BetRepo,
+			ctx.inbox as unknown as InboxRepo,
+			ctx.broadcaster as unknown as GameBroadcaster,
 		)
 
 		await useCase.execute(new WalletDebitFailedCommand('msg-g', 'ghost', 'r'))

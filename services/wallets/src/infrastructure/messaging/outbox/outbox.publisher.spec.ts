@@ -1,6 +1,11 @@
+import type { BaseRepository } from '@infrastructure/db/base.repository'
+import type { RabbitPublisher } from '@infrastructure/messaging/amqp/rabbit-publisher'
 import { OutboxPublisher } from '@infrastructure/messaging/outbox/outbox.publisher'
 import { OutboxEvent } from '@infrastructure/messaging/outbox/outbox-event.entity'
+import type { MikroORM } from '@mikro-orm/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+type OutboxRepo = BaseRepository<OutboxEvent>
 
 const newEvent = (data: Partial<OutboxEvent> = {}): OutboxEvent => {
 	const e = Object.create(OutboxEvent.prototype) as OutboxEvent
@@ -27,7 +32,7 @@ const makePublisher = () => ({
 	publish: vi.fn().mockResolvedValue(undefined),
 })
 
-const fakeOrm = {} as any
+const fakeOrm = {} as unknown as MikroORM
 
 describe('OutboxPublisher', () => {
 	beforeEach(() => vi.clearAllMocks())
@@ -39,8 +44,8 @@ describe('OutboxPublisher', () => {
 
 		const publisher = new OutboxPublisher(
 			fakeOrm,
-			repo as any,
-			channel as any,
+			repo as unknown as OutboxRepo,
+			channel as unknown as RabbitPublisher,
 			'crash.events',
 		)
 
@@ -61,8 +66,8 @@ describe('OutboxPublisher', () => {
 		const channel = makePublisher()
 		const publisher = new OutboxPublisher(
 			fakeOrm,
-			repo as any,
-			channel as any,
+			repo as unknown as OutboxRepo,
+			channel as unknown as RabbitPublisher,
 			'crash.events',
 		)
 
@@ -80,8 +85,8 @@ describe('OutboxPublisher', () => {
 		}
 		const publisher = new OutboxPublisher(
 			fakeOrm,
-			repo as any,
-			channel as any,
+			repo as unknown as OutboxRepo,
+			channel as unknown as RabbitPublisher,
 			'crash.events',
 		)
 

@@ -7,8 +7,14 @@ import {
 } from '@domain/bet/bet.exceptions'
 import { Round, RoundStatus } from '@domain/round/round.entity'
 import { RoundNotBettingException } from '@domain/round/round.exceptions'
+import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+type EventRecord = {
+	eventType: string
+	payload: Record<string, unknown>
+}
 
 const newRound = (status: RoundStatus = RoundStatus.BETTING_PHASE): Round => {
 	const r = Object.create(Round.prototype) as Round
@@ -47,9 +53,9 @@ const newBet = (overrides: Partial<Bet> = {}): Bet => {
 }
 
 const makeCtx = (opts: { round: Round | null; existingBet?: Bet | null }) => {
-	const created: any[] = []
+	const created: Bet[] = []
 	const flushCalls = { count: 0 }
-	const published: Array<{ eventType: string; payload: any }> = []
+	const published: EventRecord[] = []
 
 	const rounds = {
 		findOne: vi.fn().mockResolvedValue(opts.round),
@@ -69,13 +75,23 @@ const makeCtx = (opts: { round: Round | null; existingBet?: Bet | null }) => {
 			flushCalls.count++
 		}),
 	}
-	const events: EventPublisher = {
-		publish: vi.fn((eventType, _at, _aid, payload) => {
-			published.push({ eventType, payload })
-		}),
+	const events = {
+		publish: vi.fn(
+			(
+				eventType: string,
+				_at: string,
+				_aid: string,
+				payload: Record<string, unknown>,
+			) => {
+				published.push({ eventType, payload })
+			},
+		),
 	} as unknown as EventPublisher
 	return { rounds, bets, events, created, flushCalls, published }
 }
+
+type RoundRepo = BaseRepository<Round>
+type BetRepo = BaseRepository<Bet>
 
 describe('PlaceBetUseCase', () => {
 	beforeEach(() => vi.clearAllMocks())
@@ -84,8 +100,8 @@ describe('PlaceBetUseCase', () => {
 		const round = newRound()
 		const ctx = makeCtx({ round })
 		const useCase = new PlaceBetUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 		)
 
@@ -109,8 +125,8 @@ describe('PlaceBetUseCase', () => {
 	it('rejects when no current round exists', async () => {
 		const ctx = makeCtx({ round: null })
 		const useCase = new PlaceBetUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 		)
 
@@ -123,8 +139,8 @@ describe('PlaceBetUseCase', () => {
 		const round = newRound(RoundStatus.FLYING)
 		const ctx = makeCtx({ round })
 		const useCase = new PlaceBetUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 		)
 
@@ -137,8 +153,8 @@ describe('PlaceBetUseCase', () => {
 		const round = newRound()
 		const ctx = makeCtx({ round })
 		const useCase = new PlaceBetUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 		)
 
@@ -155,8 +171,8 @@ describe('PlaceBetUseCase', () => {
 		const existing = newBet({ roundId: round.id, userId: 'u-1' })
 		const ctx = makeCtx({ round, existingBet: existing })
 		const useCase = new PlaceBetUseCase(
-			ctx.rounds as any,
-			ctx.bets as any,
+			ctx.rounds as unknown as RoundRepo,
+			ctx.bets as unknown as BetRepo,
 			ctx.events,
 		)
 

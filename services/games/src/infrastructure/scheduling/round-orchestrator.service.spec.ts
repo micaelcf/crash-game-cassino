@@ -1,9 +1,11 @@
 import { Bet, BetStatus } from '@domain/bet/bet.entity'
 import type { ProvablyFairService } from '@domain/round/provably-fair.service'
 import { Round, RoundStatus } from '@domain/round/round.entity'
+import type { BaseRepository } from '@infrastructure/db/base.repository'
 import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
 import { RoundOrchestrator } from '@infrastructure/scheduling/round-orchestrator.service'
 import type { GameBroadcaster } from '@infrastructure/websocket/game.gateway.interface'
+import type { EntityManager, MikroORM } from '@mikro-orm/core'
 import {
 	afterAll,
 	afterEach,
@@ -13,6 +15,10 @@ import {
 	it,
 	vi,
 } from 'vitest'
+
+type RoundRepo = BaseRepository<Round>
+type BetRepo = BaseRepository<Bet>
+type EventRecord = { eventType: string; payload: Record<string, unknown> }
 
 const fakeProvablyFair: ProvablyFairService = {
 	crashPointHundredths: () => 200,
@@ -46,10 +52,10 @@ interface OrchestratorCtx {
 	state: {
 		rounds: Round[]
 		bets: Bet[]
-		published: Array<{ eventType: string; payload: any }>
+		published: EventRecord[]
 	}
-	rounds: any
-	bets: any
+	rounds: RoundRepo
+	bets: BetRepo
 	events: EventPublisher
 }
 
@@ -70,24 +76,33 @@ const makeCtx = (): OrchestratorCtx => {
 			return r
 		}),
 		findOne: vi.fn(
-			async (where: any) => state.rounds.find((r) => r.id === where.id) ?? null,
+			async (where: { id: string }) =>
+				state.rounds.find((r) => r.id === where.id) ?? null,
 		),
 		flush: vi.fn().mockResolvedValue(undefined),
-	}
+	} as unknown as RoundRepo
 	const bets = {
-		find: vi.fn(async (where: any) =>
-			state.bets.filter(
-				(b) =>
-					(!where.roundId || b.roundId === where.roundId) &&
-					(!where.status || b.status === where.status),
-			),
+		find: vi.fn(
+			async (where: { roundId?: string; status?: BetStatus }) =>
+				state.bets.filter(
+					(b) =>
+						(!where.roundId || b.roundId === where.roundId) &&
+						(!where.status || b.status === where.status),
+				),
 		),
 		flush: vi.fn().mockResolvedValue(undefined),
-	}
-	const events: EventPublisher = {
-		publish: vi.fn((eventType, _at, _aid, payload) => {
-			state.published.push({ eventType, payload })
-		}),
+	} as unknown as BetRepo
+	const events = {
+		publish: vi.fn(
+			(
+				eventType: string,
+				_at: string,
+				_aid: string,
+				payload: Record<string, unknown>,
+			) => {
+				state.published.push({ eventType, payload })
+			},
+		),
 	} as unknown as EventPublisher
 	return { state, rounds, bets, events }
 }
@@ -99,7 +114,7 @@ const config = {
 	clientSeed: 'client-x',
 }
 
-const fakeOrm = { em: {} } as any
+const fakeOrm = { em: {} as EntityManager } as unknown as MikroORM
 
 const buildOrchestrator = (
 	ctx: OrchestratorCtx,
@@ -118,7 +133,10 @@ const buildOrchestrator = (
 import { RequestContext } from '@mikro-orm/core'
 
 const originalCreate = RequestContext.create
-RequestContext.create = ((_em: any, next: any) => next()) as any
+RequestContext.create = ((
+	_em: EntityManager,
+	next: () => unknown,
+): unknown => next()) as typeof RequestContext.create
 
 describe('RoundOrchestrator', () => {
 	beforeEach(() => {
