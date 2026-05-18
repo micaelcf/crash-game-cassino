@@ -13,6 +13,7 @@
 		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
+		"@fastify/static": "^8.0.0",
 		"@mikro-orm/core": "^7.0.16",
 		"@mikro-orm/migrations": "^7.0.16",
 		"@mikro-orm/nestjs": "^7.0.1",
@@ -26,7 +27,6 @@
 		"@nestjs/platform-fastify": "^11.1.17",
 		"@nestjs/schedule": "^4.1.2",
 		"@nestjs/swagger": "^11.0.0",
-		"@fastify/static": "^8.0.0",
 		"amqp-connection-manager": "^4.1.14",
 		"amqplib": "^0.10.5",
 		"big.js": "^7.0.1",
@@ -36,7 +36,8 @@
 		"passport": "^0.7.0",
 		"passport-jwt": "^4.0.1",
 		"reflect-metadata": "^0.2.2",
-		"rxjs": "^7.8.2"
+		"rxjs": "^7.8.2",
+		"uuid": "^14.0.0"
 	},
 	"devDependencies": {
 		"@mikro-orm/cli": "^7.0.16",
@@ -45,6 +46,7 @@
 		"@types/big.js": "^6.2.2",
 		"@types/passport-jwt": "^4.0.1",
 		"@types/supertest": "^6.0.2",
+		"@types/uuid": "^11.0.0",
 		"@vitest/coverage-v8": "^4.1.6",
 		"bun-types": "latest",
 		"supertest": "^7.0.0",

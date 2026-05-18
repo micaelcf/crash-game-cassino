@@ -1,11 +1,14 @@
-import { randomUUID } from 'node:crypto'
 import { defineEntity, type InferEntity } from '@mikro-orm/core'
+import { v7 as uuidv7 } from 'uuid'
 
 export const OutboxEventSchema = defineEntity({
 	name: 'OutboxEvent',
 	tableName: 'outbox_events',
 	properties: (p) => ({
-		id: p.uuid().primary().defaultRaw('uuidv7()'),
+		id: p
+			.uuid()
+			.primary()
+			.onCreate(() => uuidv7()),
 		eventType: p.string(),
 		aggregateType: p.string(),
 		aggregateId: p.string(),

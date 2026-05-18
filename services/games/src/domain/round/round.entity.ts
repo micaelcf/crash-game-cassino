@@ -4,8 +4,8 @@ import {
 	RoundNotCrashedException,
 	RoundNotFlyingException,
 } from '@domain/round/round.exceptions'
-import { uuidv7 } from '@domain/shared/uuid'
 import { defineEntity, type InferEntity } from '@mikro-orm/core'
+import { v7 as uuidv7 } from 'uuid'
 
 export enum RoundStatus {
 	BETTING_PHASE = 'BETTING_PHASE',

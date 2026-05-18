@@ -1,7 +1,7 @@
 import { BetAlreadySettledException } from '@domain/bet/bet.exceptions'
-import { uuidv7 } from '@domain/shared/uuid'
 import { BigIntType } from '@infrastructure/db/bigint.type'
 import { defineEntity, type InferEntity } from '@mikro-orm/core'
+import { v7 as uuidv7 } from 'uuid'
 
 export enum BetStatus {
 	PENDING = 'PENDING',

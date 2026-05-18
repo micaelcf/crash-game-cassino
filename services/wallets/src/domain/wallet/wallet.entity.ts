@@ -1,13 +1,16 @@
-import { randomUUID } from 'node:crypto'
 import { InsufficientBalanceException } from '@domain/wallet/insufficient-balance.exception'
 import { BigIntType } from '@infrastructure/db/bigint.type'
 import { defineEntity, type InferEntity } from '@mikro-orm/core'
+import { v7 as uuidv7 } from 'uuid'
 
 export const WalletSchema = defineEntity({
 	name: 'Wallet',
 	tableName: 'wallets',
 	properties: (p) => ({
-		id: p.uuid().primary().defaultRaw('uuidv7()'),
+		id: p
+			.uuid()
+			.primary()
+			.onCreate(() => uuidv7()),
 		playerId: p.string(),
 		balance: p.type(BigIntType).onCreate(() => 0n),
 		createdAt: p.datetime().onCreate(() => new Date()),
