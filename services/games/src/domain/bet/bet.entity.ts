@@ -37,6 +37,12 @@ export const BetSchema = defineEntity({
 			.onCreate(() => new Date())
 			.onUpdate(() => new Date()),
 	}),
+	indexes: [
+		{
+			name: 'bets_status_created_at_idx',
+			properties: ['status', 'createdAt'],
+		},
+	],
 })
 
 export type IBet = InferEntity<typeof BetSchema>

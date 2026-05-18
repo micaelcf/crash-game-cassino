@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard'
 import { CqrsBusModule } from '@infrastructure/cqrs/cqrs.module'
 import { BetsController } from '@infrastructure/http/controllers/bets.controller'
 import { HealthController } from '@infrastructure/http/controllers/health.controller'
+import { LeaderboardController } from '@infrastructure/http/controllers/leaderboard.controller'
 import { RoundsController } from '@infrastructure/http/controllers/rounds.controller'
 import { MessagingModule } from '@infrastructure/messaging/messaging.module'
 import {
@@ -34,7 +35,12 @@ const orchestratorConfig: RoundOrchestratorConfig = {
 		WebsocketModule,
 		MikroOrmModule.forFeature([Round, Bet]),
 	],
-	controllers: [HealthController, BetsController, RoundsController],
+	controllers: [
+		HealthController,
+		BetsController,
+		RoundsController,
+		LeaderboardController,
+	],
 	providers: [
 		JwtStrategy,
 		JwtAuthGuard,

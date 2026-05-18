@@ -4,6 +4,7 @@ import { GetMyBetsHandler } from '@infrastructure/cqrs/handlers/bet/get-my-bets.
 import { PlaceBetHandler } from '@infrastructure/cqrs/handlers/bet/place-bet.handler'
 import { WalletDebitFailedHandler } from '@infrastructure/cqrs/handlers/bet/wallet-debit-failed.handler'
 import { WalletDebitedHandler } from '@infrastructure/cqrs/handlers/bet/wallet-debited.handler'
+import { GetLeaderboardHandler } from '@infrastructure/cqrs/handlers/leaderboard/get-leaderboard.handler'
 import { GetCurrentRoundHandler } from '@infrastructure/cqrs/handlers/round/get-current-round.handler'
 import { GetRoundHistoryHandler } from '@infrastructure/cqrs/handlers/round/get-round-history.handler'
 import { GetRoundVerifyHandler } from '@infrastructure/cqrs/handlers/round/get-round-verify.handler'
@@ -21,6 +22,8 @@ const HANDLERS = [
 	GetCurrentRoundHandler,
 	GetRoundHistoryHandler,
 	GetRoundVerifyHandler,
+	// leaderboard
+	GetLeaderboardHandler,
 ]
 
 @Module({

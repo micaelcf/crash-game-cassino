@@ -4,6 +4,8 @@ import { GetMyBetsUseCase } from '@application/bet/use-cases/get-my-bets.use-cas
 import { PlaceBetUseCase } from '@application/bet/use-cases/place-bet.use-case'
 import { WalletDebitFailedUseCase } from '@application/bet/use-cases/wallet-debit-failed.use-case'
 import { WalletDebitedUseCase } from '@application/bet/use-cases/wallet-debited.use-case'
+// leaderboard use cases
+import { GetLeaderboardUseCase } from '@application/leaderboard/use-cases/get-leaderboard.use-case'
 // round use cases
 import { GetCurrentRoundUseCase } from '@application/round/use-cases/get-current-round.use-case'
 import { GetRoundHistoryUseCase } from '@application/round/use-cases/get-round-history.use-case'
@@ -33,6 +35,7 @@ import { Module } from '@nestjs/common'
 		GetCurrentRoundUseCase,
 		GetRoundHistoryUseCase,
 		GetRoundVerifyUseCase,
+		GetLeaderboardUseCase,
 		EventPublisher,
 	],
 	exports: [
@@ -44,6 +47,7 @@ import { Module } from '@nestjs/common'
 		GetCurrentRoundUseCase,
 		GetRoundHistoryUseCase,
 		GetRoundVerifyUseCase,
+		GetLeaderboardUseCase,
 		EventPublisher,
 	],
 })
