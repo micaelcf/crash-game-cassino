@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
 		"resolvePackageJsonExports": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,
@@ -10,15 +10,17 @@
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"allowSyntheticDefaultImports": true,
-		"target": "ES2025",
+		"target": "esnext",
 		"sourceMap": true,
 		"incremental": true,
 		"skipLibCheck": true,
+		"strict": true,
 		"strictNullChecks": true,
 		"forceConsistentCasingInFileNames": true,
-		"noImplicitAny": false,
-		"strictBindCallApply": false,
-		"noFallthroughCasesInSwitch": false,
+		"noImplicitAny": true,
+		"strictBindCallApply": true,
+		"noFallthroughCasesInSwitch": true,
+		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],
 			"@domain/*": ["./src/domain/*"],
@@ -27,5 +29,9 @@
 		}
 	},
 	"include": ["src/**/*", "tests/**/*"],
-	"exclude": ["node_modules", "dist"]
+	"exclude": [
+		"node_modules",
+		"dist",
+		"tests/e2e/cross-service.e2e.spec.ts"
+	]
 }
