@@ -2,17 +2,21 @@ import {
 	declareTopology,
 	WALLETS_TOPOLOGY,
 } from '@infrastructure/messaging/amqp/topology'
+import { Channel } from 'amqplib'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('declareTopology', () => {
 	it('asserts the exchange, dead-letter exchange, queue with DLX argument and routing key bindings', async () => {
-		const channel = {
+		const channel: Pick<
+			Channel,
+			'assertExchange' | 'assertQueue' | 'bindQueue'
+		> = {
 			assertExchange: vi.fn().mockResolvedValue({}),
 			assertQueue: vi.fn().mockResolvedValue({}),
 			bindQueue: vi.fn().mockResolvedValue({}),
-		} as any
+		}
 
-		await declareTopology(channel, WALLETS_TOPOLOGY)
+		await declareTopology(channel as Channel, WALLETS_TOPOLOGY)
 
 		expect(channel.assertExchange).toHaveBeenCalledWith(
 			'crash.events',
@@ -43,13 +47,16 @@ describe('declareTopology', () => {
 	})
 
 	it('skips the DLX wiring when no deadLetterExchange is configured', async () => {
-		const channel = {
+		const channel: Pick<
+			Channel,
+			'assertExchange' | 'assertQueue' | 'bindQueue'
+		> = {
 			assertExchange: vi.fn().mockResolvedValue({}),
 			assertQueue: vi.fn().mockResolvedValue({}),
 			bindQueue: vi.fn().mockResolvedValue({}),
-		} as any
+		}
 
-		await declareTopology(channel, {
+		await declareTopology(channel as Channel, {
 			exchange: 'evts',
 			exchangeType: 'topic',
 			queues: [{ name: 'q', routingKeys: ['k'] }],
