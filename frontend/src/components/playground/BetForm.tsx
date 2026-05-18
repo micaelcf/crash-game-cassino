@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEventHandler, useState } from "react";
 import type { ApiError } from "#/api/http";
 import { parseAmountToCents } from "#/game/money";
 import { usePlaceBetMutation } from "#/queries/bets";
@@ -9,7 +9,7 @@ export function BetForm({ disabled }: { disabled?: boolean }) {
 	const [parseError, setParseError] = useState<string | null>(null);
 	const mutation = usePlaceBetMutation();
 
-	const onSubmit = (e: FormEvent) => {
+	const onSubmit: FormEventHandler<HTMLFormElement> = (e) => {
 		e.preventDefault();
 		setParseError(null);
 		const parsed = parseAmountToCents(value);

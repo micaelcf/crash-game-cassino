@@ -44,7 +44,7 @@ function RoundSection() {
 
 			<Section
 				title="WebSocket event log"
-				description={`Listening on ${import.meta.env.VITE_WS_URL ?? "?"} — round.betting / round.started / round.crashed / bet.placed / bet.cashed_out.`}
+				description={`Socket.IO via Kong at ${import.meta.env.VITE_WS_URL ?? "?"}/socket.io/ — events: round.betting / round.started / round.crashed / bet.placed / bet.cashed_out.`}
 			>
 				<EventLog />
 			</Section>
