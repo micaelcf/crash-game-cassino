@@ -34,10 +34,10 @@
 | Kong proxy | `http://localhost:8000` | HTTP | REST traffic only |
 | Game REST | `http://localhost:8000/games/*` | HTTP | |
 | Wallet REST | `http://localhost:8000/wallets/*` | HTTP | |
-| Game WebSocket | `http://localhost:4001` — Socket.IO default namespace `/`, default path `/socket.io/` | WS | Server→client only. Gateway is `@WebSocketGateway({ cors: { origin: '*' } })` — no namespace, no path override (see `services/games/src/infrastructure/websocket/game.gateway.ts`). Connect directly to the games service. If Kong is later configured to proxy WS, route `/socket.io/*` to games. |
+| Game WebSocket | `http://localhost:8000` — Socket.IO default namespace `/`, default path `/socket.io/` | WS | Server→client only. Proxied by Kong (`docker/kong/kong.yml` route `games-socketio`, `strip_path: false`) to games service `:4001`. Connect with `transports: ['websocket']` only — Kong does not session-affinity long-polling. JWT goes in the `auth: { token }` handshake; games service validates against Logto JWKS. Direct `:4001` is published only for backend debugging; never use from frontend (bypasses gateway + CORS). |
 | Logto | OIDC discovery doc | HTTPS | Auth code + PKCE |
 
-Configure via env (already in `src/env.ts`): `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_RESOURCE` (audience for backend access token), plus add `VITE_API_BASE_URL` (Kong), `VITE_WS_URL` (Game service Socket.IO origin — e.g. `http://localhost:4001`).
+Configure via env (already in `src/env.ts`): `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_LOGTO_RESOURCE` (audience for backend access token), `VITE_API_BASE_URL` (Kong proxy, e.g. `http://localhost:8000`), `VITE_WS_URL` (same Kong origin — also `http://localhost:8000`).
 
 ---
 
@@ -333,7 +333,7 @@ TanStack Router file-based: each path = one file under `src/routes/`. Protected 
 
 ## 18. Resolved decisions
 
-1. **Socket.IO path/namespace** — root namespace `/`, default path `/socket.io/`. Gateway has no namespace/path overrides (`@WebSocketGateway({ cors: { origin: '*' } })`). Connect directly to the games service at port `4001` until Kong WS routing is wired.
+1. **Socket.IO path/namespace** — root namespace `/`, default path `/socket.io/` (do NOT override). Kong route `games-socketio` (`docker/kong/kong.yml`) proxies `/socket.io/*` to games `:4001` and auto-upgrades HTTP → WebSocket. Frontend connects to `http://localhost:8000` with `transports: ['websocket']` only — long-polling fallback is not session-affined through Kong. Direct `:4001` is debug-only.
 2. **Money on the wire** — `amountCents` / `payoutCents` are `string` of integer cents (`BIGINT` serialized). `crashPointHundredths` / `multiplierHundredths` are `number` integer hundredths. Bet input is a masked decimal locally; only string cents go over the wire.
 3. **No `round.tick`** — no periodic resync packet exists. Client computes the curve from `startTime` + `growthRate` alone. Use `GET /games/rounds/current` if a hard resync is needed.
 4. **Bet confirmation path** — `bet.placed` carries `betId` and fires only after the wallet debit succeeds. Match the WS event against the `betId` returned by `POST /games/bet` to promote optimistic `PENDING` → `CONFIRMED`. No separate `bet.confirmed` event.
@@ -341,5 +341,5 @@ TanStack Router file-based: each path = one file under `src/routes/`. Protected 
 
 ## 19. Outstanding (not blockers, just unresolved)
 
-- Logto resource indicator (`VITE_LOGTO_RESOURCE`) — must match the Game/Wallet API audience configured in Logto and validated by Kong. Verify with the Logto admin console + Kong's JWT plugin config.
-- Kong WS routing — currently the frontend must hit the games service directly for Socket.IO. Decide whether to route `/socket.io/*` through Kong (uniform origin) or keep the split.
+- Logto resource indicator (`VITE_LOGTO_RESOURCE`) — must match the Game/Wallet API audience configured in Logto and validated by the services. Verify against the Logto admin console.
+- CORS allow-list: Kong `cors` plugin currently allows `http://localhost:3000` and `http://frontend:3000`. Any other origin (preview deploys, alternate ports) must be added in `docker/kong/kong.yml` and Kong recreated (`bun scripts/compose.ts up -d --force-recreate kong`).
