@@ -14,15 +14,33 @@ import {
 } from './utils/containers'
 import { bootstrapTestApp, closeTestApp, type TestApp } from './utils/test-app'
 
+interface CurrentRoundBody {
+	id: string
+	status: RoundStatus
+	hashCommitment: string
+	serverSeed: string | null
+	clientSeed: string
+	crashPointHundredths: number | null
+	[key: string]: unknown
+}
+
+interface VerifyBody {
+	serverSeed: string
+	clientSeed: string
+	nonce: number
+	crashPointHundredths: number
+}
+
 const waitForCurrentStatus = async (
 	app: TestApp['app'],
 	status: RoundStatus,
 	timeoutMs = 10_000,
-): Promise<any> => {
+): Promise<CurrentRoundBody> => {
 	const deadline = Date.now() + timeoutMs
 	while (Date.now() < deadline) {
 		const res = await request(app.getHttpServer()).get('/rounds/current')
-		if (res.body && res.body.status === status) return res.body
+		const body = res.body as CurrentRoundBody | undefined
+		if (body && body.status === status) return body
 		await new Promise((r) => setTimeout(r, 50))
 	}
 	throw new Error(`Timed out waiting for round status ${status}`)
@@ -73,19 +91,21 @@ describe('Provably fair (e2e)', () => {
 			.get(`/rounds/${roundId}/verify`)
 			.expect(200)
 
-		expect(sha256(verify.body.serverSeed)).toBe(hashCommitment)
+		const verifyBody = verify.body as VerifyBody
+		expect(sha256(verifyBody.serverSeed)).toBe(hashCommitment)
 	})
 
 	it('reproducing the multiplier from (serverSeed, clientSeed) yields the recorded crashPoint', async () => {
 		// pick any crashed round
 		const deadline = Date.now() + 10_000
-		let crashed: any = null
+		let crashed: CurrentRoundBody | null = null
 		while (Date.now() < deadline) {
 			const res = await request(testApp.app.getHttpServer()).get(
 				'/rounds/current',
 			)
-			if (res.body && res.body.status === RoundStatus.CRASHED) {
-				crashed = res.body
+			const body = res.body as CurrentRoundBody | undefined
+			if (body && body.status === RoundStatus.CRASHED) {
+				crashed = body
 				break
 			}
 			await new Promise((r) => setTimeout(r, 50))
@@ -96,9 +116,10 @@ describe('Provably fair (e2e)', () => {
 			.get(`/rounds/${crashed.id}/verify`)
 			.expect(200)
 
+		const verifyBody = verify.body as VerifyBody
 		const recomputed = provablyFair.crashPointHundredths(
-			verify.body.serverSeed,
-			verify.body.clientSeed,
+			verifyBody.serverSeed,
+			verifyBody.clientSeed,
 		)
 		expect(recomputed).toBe(crashed.crashPointHundredths)
 	})

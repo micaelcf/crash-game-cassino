@@ -14,15 +14,25 @@ import { truncateAllTables } from './utils/truncate'
 
 const POLL_INTERVAL_MS = 50
 
+interface CurrentRoundBody {
+	id: string
+	status: RoundStatus
+	hashCommitment: string
+	crashPointHundredths: number | null
+	serverSeed: string | null
+	[key: string]: unknown
+}
+
 const waitForRoundStatus = async (
 	app: TestApp['app'],
 	status: RoundStatus,
 	timeoutMs = 5_000,
-): Promise<any> => {
+): Promise<CurrentRoundBody> => {
 	const deadline = Date.now() + timeoutMs
 	while (Date.now() < deadline) {
 		const res = await request(app.getHttpServer()).get('/rounds/current')
-		if (res.body && res.body.status === status) return res.body
+		const body = res.body as CurrentRoundBody | undefined
+		if (body && body.status === status) return body
 		await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
 	}
 	throw new Error(`Timed out waiting for round status ${status}`)

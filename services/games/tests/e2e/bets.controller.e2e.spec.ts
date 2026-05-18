@@ -22,15 +22,28 @@ import { truncateAllTables } from './utils/truncate'
 
 const POLL_MS = 50
 
+interface CurrentRoundBody {
+	id: string
+	status: RoundStatus
+	[key: string]: unknown
+}
+
+interface BetItem {
+	id: string
+	status: BetStatus
+	[key: string]: unknown
+}
+
 const waitForRoundStatus = async (
 	app: TestApp['app'],
 	status: RoundStatus,
 	timeoutMs = 5_000,
-): Promise<any> => {
+): Promise<CurrentRoundBody> => {
 	const deadline = Date.now() + timeoutMs
 	while (Date.now() < deadline) {
 		const res = await request(app.getHttpServer()).get('/rounds/current')
-		if (res.body && res.body.status === status) return res.body
+		const body = res.body as CurrentRoundBody | undefined
+		if (body && body.status === status) return body
 		await new Promise((r) => setTimeout(r, POLL_MS))
 	}
 	throw new Error(`Timed out waiting for round status ${status}`)
@@ -39,15 +52,16 @@ const waitForRoundStatus = async (
 const pollMyBets = async (
 	app: TestApp['app'],
 	userId: string,
-	predicate: (items: any[]) => boolean,
+	predicate: (items: BetItem[]) => boolean,
 	timeoutMs = 5_000,
-): Promise<any[]> => {
+): Promise<BetItem[]> => {
 	const deadline = Date.now() + timeoutMs
 	while (Date.now() < deadline) {
 		const res = await request(app.getHttpServer())
 			.get('/bets/me')
 			.set('x-mock-user-id', userId)
-		if (res.body?.items && predicate(res.body.items)) return res.body.items
+		const items = (res.body as { items?: BetItem[] } | undefined)?.items
+		if (items && predicate(items)) return items
 		await new Promise((r) => setTimeout(r, POLL_MS))
 	}
 	throw new Error('Timed out waiting for bet predicate')

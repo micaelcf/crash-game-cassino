@@ -3,10 +3,14 @@ import {
 	declareTopology,
 	type RabbitTopology,
 } from '@infrastructure/messaging/amqp/topology'
-import amqp, { type Channel, type ConsumeMessage } from 'amqplib'
+import amqp, {
+	type ChannelModel,
+	type Channel,
+	type ConsumeMessage,
+} from 'amqplib'
 
 export interface BrokerProbe {
-	connection: any
+	connection: ChannelModel
 	channel: Channel
 	close: () => Promise<void>
 }
@@ -61,20 +65,20 @@ export const publishEvent = async (
 	return messageId
 }
 
-export interface CapturedMessage {
+export interface CapturedMessage<P = Record<string, unknown>> {
 	routingKey: string
 	messageId: string
-	payload: any
+	payload: P
 	raw: ConsumeMessage
 }
 
-export const waitForEvent = async (
+export const waitForEvent = async <P = Record<string, unknown>>(
 	channel: Channel,
 	queue: string,
-	predicate: (msg: CapturedMessage) => boolean,
+	predicate: (msg: CapturedMessage<P>) => boolean,
 	timeoutMs = 5_000,
-): Promise<CapturedMessage> => {
-	return new Promise<CapturedMessage>((resolve, reject) => {
+): Promise<CapturedMessage<P>> => {
+	return new Promise<CapturedMessage<P>>((resolve, reject) => {
 		let consumerTag: string | undefined
 		const timer = setTimeout(async () => {
 			if (consumerTag) {
@@ -93,15 +97,17 @@ export const waitForEvent = async (
 				async (msg) => {
 					if (!msg) return
 					try {
-						const body = JSON.parse(msg.content.toString())
+						const body = JSON.parse(msg.content.toString()) as
+							| { data?: unknown }
+							| unknown
 						const payload =
 							body && typeof body === 'object' && 'data' in body
-								? body.data
+								? (body as { data: unknown }).data
 								: body
-						const captured: CapturedMessage = {
+						const captured: CapturedMessage<P> = {
 							routingKey: msg.fields.routingKey,
 							messageId: msg.properties.messageId ?? '',
-							payload,
+							payload: payload as P,
 							raw: msg,
 						}
 						channel.ack(msg)
