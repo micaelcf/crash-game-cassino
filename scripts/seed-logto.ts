@@ -9,11 +9,13 @@
  *   - Exchanges it for a Management API access token.
  *   - Creates a single-page application "Crash Game Frontend" with the right
  *     redirect / post-logout / CORS URIs.
- *   - Creates a username/password test user `demo` / `demo1234`.
- *   - Writes the resulting app id back to `frontend/.env` (preserving every
- *     other line).
+ *   - Creates the protected API resource indicator so Logto issues audience-
+ *     bound JWTs to the frontend instead of opaque userinfo tokens. No scopes
+ *     / roles — backend services only validate signature + audience.
+ *   - Creates a username/password test user.
+ *   - Writes app id + resource indicator back to `frontend/.env`.
  *
- * Re-runs are no-ops: existing app/user are reused.
+ * Re-runs are no-ops.
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
@@ -31,9 +33,19 @@ const CFG = {
 	logtoAdminEndpoint:
 		process.env.LOGTO_ADMIN_ENDPOINT ?? 'http://localhost:3002',
 	m2mClientId: 'm-default',
-	resourceIndicator: 'https://default.logto.app/api',
+	// Audience used to exchange the M2M client_credentials for an access token
+	// that targets Logto's own Management API.
+	managementApiIndicator: 'https://default.logto.app/api',
 	appName: 'Crash Game Frontend',
 	frontendOrigin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000',
+	// Audience for our own backend services (games + wallets). Frontend asks
+	// Logto for an access token bound to this resource, services validate the
+	// `aud` claim against it. No scopes — MVP has no per-action authorization.
+	apiResource: {
+		indicator:
+			process.env.CRASH_API_INDICATOR ?? 'https://api.crash-game.local',
+		name: 'Crash Game API',
+	},
 	demoUser: {
 		username: 'crash',
 		password: 'crash1234',
@@ -89,7 +101,7 @@ async function fetchAccessToken(secret: string): Promise<string> {
 		},
 		body: new URLSearchParams({
 			grant_type: 'client_credentials',
-			resource: CFG.resourceIndicator,
+			resource: CFG.managementApiIndicator,
 			scope: 'all',
 		}).toString(),
 	})
@@ -119,6 +131,7 @@ function api(token: string) {
 
 type LogtoApplication = { id: string; name: string; type: string }
 type LogtoUser = { id: string; username: string | null }
+type LogtoResource = { id: string; name: string; indicator: string }
 
 async function ensureSpaApp(token: string): Promise<string> {
 	const call = api(token)
@@ -188,6 +201,29 @@ async function ensureDemoUser(token: string): Promise<void> {
 	)
 }
 
+async function ensureApiResource(token: string): Promise<void> {
+	const call = api(token)
+	const listRes = await call('GET', '/api/resources?page=1&page_size=100')
+	if (!listRes.ok)
+		throw new Error(
+			`List resources failed: ${listRes.status} ${await listRes.text()}`,
+		)
+	const resources = (await listRes.json()) as LogtoResource[]
+	if (resources.some((r) => r.indicator === CFG.apiResource.indicator)) {
+		console.log(`✓ API resource already exists: ${CFG.apiResource.indicator}`)
+		return
+	}
+	const createRes = await call('POST', '/api/resources', {
+		name: CFG.apiResource.name,
+		indicator: CFG.apiResource.indicator,
+	})
+	if (!createRes.ok)
+		throw new Error(
+			`Create resource failed: ${createRes.status} ${await createRes.text()}`,
+		)
+	console.log(`+ Created API resource: ${CFG.apiResource.indicator}`)
+}
+
 function updateFrontendEnv(appId: string): void {
 	const target = CFG.frontendEnvFile
 	const example = resolve(ROOT, 'frontend/.env.example')
@@ -201,18 +237,24 @@ function updateFrontendEnv(appId: string): void {
 	const updates: Record<string, string> = {
 		VITE_LOGTO_ENDPOINT: `${CFG.logtoEndpoint}/`,
 		VITE_LOGTO_APP_ID: appId,
+		VITE_LOGTO_RESOURCE: CFG.apiResource.indicator,
 	}
 
 	for (const [key, value] of Object.entries(updates)) {
 		const line = `${key}=${value}`
-		const re = new RegExp(`^${key}=.*$`, 'm')
+		// Match the active line OR a previously commented-out placeholder so
+		// re-running the seeder activates resource indicator entries that the
+		// `.env.example` ships disabled.
+		const re = new RegExp(`^#?\\s*${key}=.*$`, 'm')
 		content = re.test(content)
 			? content.replace(re, line)
 			: `${content}\n${line}`
 	}
 
 	writeFileSync(target, `${content.trimEnd()}\n`, 'utf8')
-	console.log(`✓ Updated ${target} (VITE_LOGTO_APP_ID=${appId})`)
+	console.log(
+		`✓ Updated ${target} (VITE_LOGTO_APP_ID=${appId}, VITE_LOGTO_RESOURCE=${CFG.apiResource.indicator})`,
+	)
 }
 
 async function main(): Promise<void> {
@@ -232,12 +274,14 @@ async function main(): Promise<void> {
 	const secret = await fetchM2mSecret()
 	const token = await fetchAccessToken(secret)
 	const appId = await ensureSpaApp(token)
+	await ensureApiResource(token)
 	await ensureDemoUser(token)
 	updateFrontendEnv(appId)
 
 	console.log('\nLogto seeded.')
 	console.log(`  Admin console : ${CFG.logtoAdminEndpoint}`)
 	console.log(`  OIDC issuer   : ${CFG.logtoEndpoint}/oidc`)
+	console.log(`  API resource  : ${CFG.apiResource.indicator}`)
 	console.log(
 		`  Demo login    : ${CFG.demoUser.username} / ${CFG.demoUser.password}`,
 	)
