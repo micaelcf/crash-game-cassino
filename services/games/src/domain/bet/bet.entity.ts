@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto'
 import { BetAlreadySettledException } from '@domain/bet/bet.exceptions'
+import { uuidv7 } from '@domain/shared/uuid'
 import { BigIntType } from '@infrastructure/db/bigint.type'
 import { defineEntity, type InferEntity } from '@mikro-orm/core'
 
@@ -21,7 +21,10 @@ export const BetSchema = defineEntity({
 	name: 'Bet',
 	tableName: 'bets',
 	properties: (p) => ({
-		id: p.uuid().primary().defaultRaw('uuidv7()'),
+		id: p
+			.uuid()
+			.primary()
+			.onCreate(() => uuidv7()),
 		roundId: p.string(),
 		userId: p.string(),
 		username: p.string(),
