@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Bet, BetStatus } from '../../../domain/bet/bet.entity'
+import { PlaceBetCommand } from '@application/bet/dtos/place-bet.command'
+import { PlaceBetUseCase } from '@application/bet/use-cases/place-bet.use-case'
+import { Bet, BetStatus } from '@domain/bet/bet.entity'
 import {
 	BetAmountOutOfRangeException,
 	DuplicateBetException,
-} from '../../../domain/bet/bet.exceptions'
-import { Round, RoundStatus } from '../../../domain/round/round.entity'
-import { RoundNotBettingException } from '../../../domain/round/round.exceptions'
-import type { EventPublisher } from '../../../infrastructure/messaging/outbox/event-publisher.service'
-import { PlaceBetCommand } from '../dtos/place-bet.command'
-import { PlaceBetUseCase } from './place-bet.use-case'
+} from '@domain/bet/bet.exceptions'
+import { Round, RoundStatus } from '@domain/round/round.entity'
+import { RoundNotBettingException } from '@domain/round/round.exceptions'
+import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const newRound = (status: RoundStatus = RoundStatus.BETTING_PHASE): Round => {
 	const r = Object.create(Round.prototype) as Round
@@ -53,6 +53,7 @@ const makeCtx = (opts: { round: Round | null; existingBet?: Bet | null }) => {
 
 	const rounds = {
 		findOne: vi.fn().mockResolvedValue(opts.round),
+		findAll: vi.fn().mockResolvedValue(opts.round ? [opts.round] : []),
 		flush: vi.fn(async () => {
 			flushCalls.count++
 		}),

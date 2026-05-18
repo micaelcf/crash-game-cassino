@@ -1,7 +1,7 @@
+import { BaseRepository } from '@infrastructure/db/base.repository'
+import { OutboxEvent } from '@infrastructure/messaging/outbox/outbox-event.entity'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Injectable } from '@nestjs/common'
-import { BaseRepository } from '../../db/base.repository'
-import { OutboxEvent } from './outbox-event.entity'
 
 /**
  * Use-case-facing facade over the transactional outbox. Records a pending

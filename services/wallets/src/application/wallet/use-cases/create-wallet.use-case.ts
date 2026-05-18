@@ -1,8 +1,8 @@
+import { CreateWalletCommand } from '@application/wallet/dtos/create-wallet.command'
+import { Wallet } from '@domain/wallet/wallet.entity'
+import { BaseRepository } from '@infrastructure/db/base.repository'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { ConflictException, Injectable } from '@nestjs/common'
-import { Wallet } from '../../../domain/wallet/wallet.entity'
-import type { BaseRepository } from '../../../infrastructure/db/base.repository'
-import type { CreateWalletCommand } from '../dtos/create-wallet.command'
 
 const DEFAULT_BALANCE_CENTS = 100000n
 

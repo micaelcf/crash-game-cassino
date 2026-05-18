@@ -1,3 +1,3 @@
 export class CashOutCommand {
-  constructor(public readonly userId: string) {}
+	constructor(public readonly userId: string) {}
 }

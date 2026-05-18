@@ -1,3 +1,3 @@
 export class CreateWalletCommand {
-  constructor(public readonly playerId: string) {}
+	constructor(public readonly playerId: string) {}
 }

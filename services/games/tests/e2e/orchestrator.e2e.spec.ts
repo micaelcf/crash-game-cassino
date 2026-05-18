@@ -1,9 +1,9 @@
+import { Bet, BetStatus } from '@domain/bet/bet.entity'
+import { RoundStatus } from '@domain/round/round.entity'
+import { GAMES_TOPOLOGY } from '@infrastructure/messaging/amqp/topology'
 import type { MikroORM } from '@mikro-orm/core'
 import request from 'supertest'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { Bet, BetStatus } from '../../src/domain/bet/bet.entity'
-import { Round, RoundStatus } from '../../src/domain/round/round.entity'
-import { GAMES_TOPOLOGY } from '../../src/infrastructure/messaging/amqp/topology'
 import {
 	type PgHandle,
 	type RabbitHandle,

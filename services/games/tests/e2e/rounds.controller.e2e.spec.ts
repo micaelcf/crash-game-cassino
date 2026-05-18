@@ -1,7 +1,7 @@
+import { RoundStatus } from '@domain/round/round.entity'
 import type { MikroORM } from '@mikro-orm/core'
 import request from 'supertest'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { RoundStatus } from '../../src/domain/round/round.entity'
 import {
 	type PgHandle,
 	type RabbitHandle,

@@ -1,13 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import request from 'supertest'
-import { bootstrapTestApp, closeTestApp, type TestApp } from './utils/test-app'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
+	type PgHandle,
+	type RabbitHandle,
 	startPostgres,
 	startRabbit,
 	stopContainer,
-	type PgHandle,
-	type RabbitHandle,
 } from './utils/containers'
+import { bootstrapTestApp, closeTestApp, type TestApp } from './utils/test-app'
 
 describe('Health (e2e)', () => {
 	let pg: PgHandle

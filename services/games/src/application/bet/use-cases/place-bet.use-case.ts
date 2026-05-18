@@ -1,16 +1,16 @@
-import { InjectRepository } from '@mikro-orm/nestjs'
-import { Injectable } from '@nestjs/common'
-import { Bet } from '../../../domain/bet/bet.entity'
+import { PlaceBetCommand } from '@application/bet/dtos/place-bet.command'
+import { MAX_BET_CENTS, MIN_BET_CENTS } from '@application/bet-limits'
+import { Bet } from '@domain/bet/bet.entity'
 import {
 	BetAmountOutOfRangeException,
 	DuplicateBetException,
-} from '../../../domain/bet/bet.exceptions'
-import { Round, RoundStatus } from '../../../domain/round/round.entity'
-import { RoundNotBettingException } from '../../../domain/round/round.exceptions'
-import type { BaseRepository } from '../../../infrastructure/db/base.repository'
-import { EventPublisher } from '../../../infrastructure/messaging/outbox/event-publisher.service'
-import { MAX_BET_CENTS, MIN_BET_CENTS } from '../../bet-limits'
-import type { PlaceBetCommand } from '../dtos/place-bet.command'
+} from '@domain/bet/bet.exceptions'
+import { Round, RoundStatus } from '@domain/round/round.entity'
+import { RoundNotBettingException } from '@domain/round/round.exceptions'
+import { BaseRepository } from '@infrastructure/db/base.repository'
+import { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { InjectRepository } from '@mikro-orm/nestjs'
+import { Injectable } from '@nestjs/common'
 
 @Injectable()
 export class PlaceBetUseCase {

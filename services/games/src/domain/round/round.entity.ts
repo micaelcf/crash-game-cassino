@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { defineEntity, type InferEntity } from '@mikro-orm/core'
 import {
 	RoundAlreadyCrashedException,
 	RoundNotBettingException,
 	RoundNotCrashedException,
 	RoundNotFlyingException,
-} from './round.exceptions'
+} from '@domain/round/round.exceptions'
+import { defineEntity, type InferEntity } from '@mikro-orm/core'
 
 export enum RoundStatus {
 	BETTING_PHASE = 'BETTING_PHASE',
@@ -24,7 +24,7 @@ export const RoundSchema = defineEntity({
 	name: 'Round',
 	tableName: 'rounds',
 	properties: (p) => ({
-		id: p.uuid().primary().onCreate(() => randomUUID()),
+		id: p.uuid().primary().defaultRaw('uuidv7()'),
 		nonce: p.integer(),
 		serverSeedHash: p.string(),
 		serverSeed: p.string().nullable(),

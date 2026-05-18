@@ -1,3 +1,3 @@
 export class GetRoundVerifyQuery {
-  constructor(public readonly roundId: string) {}
+	constructor(public readonly roundId: string) {}
 }

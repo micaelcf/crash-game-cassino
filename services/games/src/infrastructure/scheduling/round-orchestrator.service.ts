@@ -1,26 +1,26 @@
 import { randomBytes } from 'node:crypto'
+import { Bet, BetStatus } from '@domain/bet/bet.entity'
+import { ProvablyFairService } from '@domain/round/provably-fair.service'
+import { Round, RoundStatus } from '@domain/round/round.entity'
+import { BaseRepository } from '@infrastructure/db/base.repository'
+import { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import {
+	ROUND_ORCHESTRATOR_CONFIG,
+	type RoundOrchestratorConfig,
+} from '@infrastructure/scheduling/round-orchestrator.config'
+import {
+	GAME_BROADCASTER,
+	type GameBroadcaster,
+} from '@infrastructure/websocket/game.gateway.interface'
 import { MikroORM, RequestContext } from '@mikro-orm/core'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import {
 	Inject,
 	Injectable,
 	Logger,
-	type OnModuleDestroy,
-	type OnModuleInit,
+	OnModuleDestroy,
+	OnModuleInit,
 } from '@nestjs/common'
-import { Bet, BetStatus } from '../../domain/bet/bet.entity'
-import { ProvablyFairService } from '../../domain/round/provably-fair.service'
-import { Round, RoundStatus } from '../../domain/round/round.entity'
-import { BaseRepository } from '../db/base.repository'
-import { EventPublisher } from '../messaging/outbox/event-publisher.service'
-import {
-	GAME_BROADCASTER,
-	type GameBroadcaster,
-} from '../websocket/game.gateway.interface'
-import {
-	ROUND_ORCHESTRATOR_CONFIG,
-	type RoundOrchestratorConfig,
-} from './round-orchestrator.config'
 
 @Injectable()
 export class RoundOrchestrator implements OnModuleInit, OnModuleDestroy {
@@ -109,10 +109,7 @@ export class RoundOrchestrator implements OnModuleInit, OnModuleDestroy {
 	private async startFlight(roundId: string): Promise<void> {
 		const round = await this.rounds.findOne({ id: roundId })
 		if (!round || round.status !== RoundStatus.BETTING_PHASE) {
-			this.schedule(
-				() => this.openBettingPhase(),
-				this.config.interRoundGapMs,
-			)
+			this.schedule(() => this.openBettingPhase(), this.config.interRoundGapMs)
 			return
 		}
 		const now = new Date()
@@ -136,10 +133,7 @@ export class RoundOrchestrator implements OnModuleInit, OnModuleDestroy {
 	private async crashRound(roundId: string): Promise<void> {
 		const round = await this.rounds.findOne({ id: roundId })
 		if (!round || round.status !== RoundStatus.FLYING) {
-			this.schedule(
-				() => this.openBettingPhase(),
-				this.config.interRoundGapMs,
-			)
+			this.schedule(() => this.openBettingPhase(), this.config.interRoundGapMs)
 			return
 		}
 		const now = new Date()

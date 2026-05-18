@@ -1,3 +1,3 @@
 export class GetWalletQuery {
-  constructor(public readonly playerId: string) {}
+	constructor(public readonly playerId: string) {}
 }

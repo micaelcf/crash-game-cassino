@@ -1,3 +1,9 @@
+import { Bet, BetStatus } from '@domain/bet/bet.entity'
+import type { ProvablyFairService } from '@domain/round/provably-fair.service'
+import { Round, RoundStatus } from '@domain/round/round.entity'
+import type { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import { RoundOrchestrator } from '@infrastructure/scheduling/round-orchestrator.service'
+import type { GameBroadcaster } from '@infrastructure/websocket/game.gateway.interface'
 import {
 	afterAll,
 	afterEach,
@@ -7,12 +13,6 @@ import {
 	it,
 	vi,
 } from 'vitest'
-import { Bet, BetStatus } from '../../domain/bet/bet.entity'
-import type { ProvablyFairService } from '../../domain/round/provably-fair.service'
-import { Round, RoundStatus } from '../../domain/round/round.entity'
-import type { EventPublisher } from '../messaging/outbox/event-publisher.service'
-import type { GameBroadcaster } from '../websocket/game.gateway.interface'
-import { RoundOrchestrator } from './round-orchestrator.service'
 
 const fakeProvablyFair: ProvablyFairService = {
 	crashPointHundredths: () => 200,
@@ -26,6 +26,7 @@ const makeBroadcaster = (): GameBroadcaster => ({
 	emitRoundCrashed: vi.fn(),
 	emitBetPlaced: vi.fn(),
 	emitBetCashedOut: vi.fn(),
+	emitBetCancelled: vi.fn(),
 })
 
 const stubRound = (data: Partial<Round>): Round => {

@@ -5,7 +5,7 @@ export const OutboxEventSchema = defineEntity({
 	name: 'OutboxEvent',
 	tableName: 'outbox_events',
 	properties: (p) => ({
-		id: p.uuid().primary().onCreate(() => randomUUID()),
+		id: p.uuid().primary().defaultRaw('uuidv7()'),
 		eventType: p.string(),
 		aggregateType: p.string(),
 		aggregateId: p.string(),

@@ -1,11 +1,15 @@
 import 'reflect-metadata'
-import { type INestApplication, ValidationPipe } from '@nestjs/common'
-import { Test } from '@nestjs/testing'
 import { MikroORM } from '@mikro-orm/core'
+import { ValidationPipe } from '@nestjs/common'
 import { Transport } from '@nestjs/microservices'
+import {
+	FastifyAdapter,
+	type NestFastifyApplication,
+} from '@nestjs/platform-fastify'
+import { Test } from '@nestjs/testing'
 
 export interface TestApp {
-	app: INestApplication
+	app: NestFastifyApplication
 	orm: MikroORM
 	rabbitUrl: string
 }
@@ -33,7 +37,9 @@ export const bootstrapTestApp = async (
 		imports: [AppModule],
 	}).compile()
 
-	const app = moduleRef.createNestApplication()
+	const app = moduleRef.createNestApplication<NestFastifyApplication>(
+		new FastifyAdapter(),
+	)
 	app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
 
 	app.connectMicroservice({
@@ -54,6 +60,7 @@ export const bootstrapTestApp = async (
 	await orm.schema.refresh()
 
 	await app.init()
+	await app.getHttpAdapter().getInstance().ready()
 	await app.startAllMicroservices()
 
 	return { app, orm, rabbitUrl: opts.rabbitUrl }

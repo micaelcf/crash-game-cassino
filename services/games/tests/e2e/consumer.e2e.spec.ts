@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
+import { Bet, BetStatus } from '@domain/bet/bet.entity'
+import { GAMES_TOPOLOGY } from '@infrastructure/messaging/amqp/topology'
+import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
 import type { MikroORM } from '@mikro-orm/core'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { Bet, BetStatus } from '../../src/domain/bet/bet.entity'
-import { GAMES_TOPOLOGY } from '../../src/infrastructure/messaging/amqp/topology'
-import { InboxEvent } from '../../src/infrastructure/messaging/inbox/inbox-event.entity'
 import {
 	type PgHandle,
 	type RabbitHandle,

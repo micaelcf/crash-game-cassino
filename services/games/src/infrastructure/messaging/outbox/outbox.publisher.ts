@@ -1,13 +1,13 @@
+import { BaseRepository } from '@infrastructure/db/base.repository'
+import {
+	RABBIT_PUBLISHER,
+	type RabbitPublisher,
+} from '@infrastructure/messaging/amqp/rabbit-publisher'
+import { OutboxEvent } from '@infrastructure/messaging/outbox/outbox-event.entity'
 import { MikroORM, RequestContext } from '@mikro-orm/core'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Interval } from '@nestjs/schedule'
-import { BaseRepository } from '../../db/base.repository'
-import {
-	RABBIT_PUBLISHER,
-	type RabbitPublisher,
-} from '../amqp/rabbit-publisher'
-import { OutboxEvent } from './outbox-event.entity'
 
 const BATCH_SIZE = 100
 
@@ -59,7 +59,7 @@ export class OutboxPublisher {
 				)
 				evt.markPublished()
 				mutated = true
-			} catch (err) {
+			} catch (_err) {
 				evt.recordAttempt()
 				this.logger.warn(
 					`publish failed for ${evt.eventType} (${evt.id}), attempts=${evt.attempts}`,

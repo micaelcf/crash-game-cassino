@@ -1,10 +1,10 @@
-import request from 'supertest'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
 	ProvablyFairService,
 	sha256,
-} from '../../src/domain/round/provably-fair.service'
-import { RoundStatus } from '../../src/domain/round/round.entity'
+} from '@domain/round/provably-fair.service'
+import { RoundStatus } from '@domain/round/round.entity'
+import request from 'supertest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
 	type PgHandle,
 	type RabbitHandle,

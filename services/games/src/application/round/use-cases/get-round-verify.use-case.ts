@@ -1,11 +1,8 @@
+import { GetRoundVerifyQuery } from '@application/round/dtos/get-round-verify.query'
+import { Round, RoundVerification } from '@domain/round/round.entity'
+import { BaseRepository } from '@infrastructure/db/base.repository'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import {
-	Round,
-	type RoundVerification,
-} from '../../../domain/round/round.entity'
-import { BaseRepository } from '../../../infrastructure/db/base.repository'
-import { GetRoundVerifyQuery } from '../dtos/get-round-verify.query'
 
 @Injectable()
 export class GetRoundVerifyUseCase {

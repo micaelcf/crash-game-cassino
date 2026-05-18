@@ -1,3 +1,20 @@
+import { toBetDto } from '@application/bet/dtos/bet.dto'
+import { CashOutCommand } from '@application/bet/dtos/cash-out.command'
+import { GetMyBetsQuery } from '@application/bet/dtos/get-my-bets.query'
+import { PlaceBetCommand } from '@application/bet/dtos/place-bet.command'
+import { Bet } from '@domain/bet/bet.entity'
+import {
+	BetAmountOutOfRangeException,
+	DuplicateBetException,
+	NoActiveBetException,
+} from '@domain/bet/bet.exceptions'
+import {
+	RoundNotBettingException,
+	RoundNotFlyingException,
+} from '@domain/round/round.exceptions'
+import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard'
+import { PaginationDto } from '@infrastructure/http/dtos/pagination.dto'
+import { PlaceBetDto } from '@infrastructure/http/dtos/place-bet.dto'
 import {
 	BadRequestException,
 	Body,
@@ -18,23 +35,6 @@ import {
 	ApiOperation,
 	ApiTags,
 } from '@nestjs/swagger'
-import { toBetDto } from '../../../application/bet/dtos/bet.dto'
-import { CashOutCommand } from '../../../application/bet/dtos/cash-out.command'
-import { GetMyBetsQuery } from '../../../application/bet/dtos/get-my-bets.query'
-import { PlaceBetCommand } from '../../../application/bet/dtos/place-bet.command'
-import type { Bet } from '../../../domain/bet/bet.entity'
-import {
-	BetAmountOutOfRangeException,
-	DuplicateBetException,
-	NoActiveBetException,
-} from '../../../domain/bet/bet.exceptions'
-import {
-	RoundNotBettingException,
-	RoundNotFlyingException,
-} from '../../../domain/round/round.exceptions'
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard'
-import type { PaginationDto } from '../dtos/pagination.dto'
-import type { PlaceBetDto } from '../dtos/place-bet.dto'
 
 @ApiTags('bets')
 @ApiBearerAuth()

@@ -1,9 +1,9 @@
+import { RoundDto, toRoundDto } from '@application/round/dtos/round.dto'
+import { Bet } from '@domain/bet/bet.entity'
+import { Round } from '@domain/round/round.entity'
+import { BaseRepository } from '@infrastructure/db/base.repository'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Injectable } from '@nestjs/common'
-import { Bet } from '../../../domain/bet/bet.entity'
-import { Round } from '../../../domain/round/round.entity'
-import { BaseRepository } from '../../../infrastructure/db/base.repository'
-import { type RoundDto, toRoundDto } from '../dtos/round.dto'
 
 @Injectable()
 export class GetCurrentRoundUseCase {
