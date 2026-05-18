@@ -98,9 +98,11 @@ describe('Rounds controller (e2e)', () => {
 			.expect(200)
 
 		expect(verify.body).toMatchObject({
+			roundId: crashed.id,
 			nonce: expect.any(Number),
 			serverSeed: expect.any(String),
 			clientSeed: expect.any(String),
+			hashCommitment: crashed.hashCommitment,
 			crashPointHundredths: crashed.crashPointHundredths,
 		})
 	})

@@ -11,9 +11,11 @@ import { v7 as uuidv7 } from 'uuid'
 export { RoundStatus }
 
 export interface RoundVerification {
+	roundId: string
 	nonce: number
 	serverSeed: string
 	clientSeed: string
+	hashCommitment: string
 	crashPointHundredths: number
 }
 
@@ -84,9 +86,11 @@ export class Round extends RoundSchema.class {
 			throw new RoundNotCrashedException(this.id)
 		}
 		return {
+			roundId: this.id,
 			nonce: this.nonce,
 			serverSeed: this.serverSeed,
 			clientSeed: this.clientSeed,
+			hashCommitment: this.serverSeedHash,
 			crashPointHundredths: this.crashPointHundredths,
 		}
 	}

@@ -122,9 +122,11 @@ describe('Round entity', () => {
 			r.crash(new Date(1_020_000), 'srv-seed')
 
 			expect(r.verify()).toEqual({
+				roundId: r.id,
 				nonce: 1,
 				serverSeed: 'srv-seed',
 				clientSeed: 'block-hash',
+				hashCommitment: 'commit-hash',
 				crashPointHundredths: 234,
 			})
 		})

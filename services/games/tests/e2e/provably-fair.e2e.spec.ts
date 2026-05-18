@@ -25,9 +25,11 @@ interface CurrentRoundBody {
 }
 
 interface VerifyBody {
+	roundId: string
 	serverSeed: string
 	clientSeed: string
 	nonce: number
+	hashCommitment: string
 	crashPointHundredths: number
 }
 
@@ -92,6 +94,8 @@ describe('Provably fair (e2e)', () => {
 			.expect(200)
 
 		const verifyBody = verify.body as VerifyBody
+		expect(verifyBody.roundId).toBe(roundId)
+		expect(verifyBody.hashCommitment).toBe(hashCommitment)
 		expect(sha256(verifyBody.serverSeed)).toBe(hashCommitment)
 	})
 
