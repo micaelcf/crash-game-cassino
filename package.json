@@ -7,9 +7,14 @@
 		"docker:up:infra": "bun scripts/compose.ts up -d postgres rabbitmq logto kong games wallets && bun scripts/seed-logto.ts",
 		"docker:down": "bun scripts/compose.ts down",
 		"docker:prune": "bun scripts/compose.ts down -v --rmi all --remove-orphans",
-		"seed:logto": "bun scripts/seed-logto.ts"
+		"seed:logto": "bun scripts/seed-logto.ts",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"typecheck": "bun run --cwd services/games typecheck && bun run --cwd services/wallets typecheck",
+		"test:unit": "bun run --cwd services/games test && bun run --cwd services/wallets test"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.4.15",
 		"@types/bun": "latest",
 		"bun-types": "latest",
 		"ts-morph": "^28.0.0"

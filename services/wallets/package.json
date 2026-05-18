@@ -5,6 +5,7 @@
 	"scripts": {
 		"dev": "bun run --watch src/main.ts",
 		"start": "bun run src/main.ts",
+		"typecheck": "tsc --noEmit",
 		"test": "vitest run src",
 		"test:watch": "vitest src",
 		"test:integration": "vitest run tests/integration tests/e2e",

@@ -4,8 +4,8 @@ import {
 	type RabbitTopology,
 } from '@infrastructure/messaging/amqp/topology'
 import amqp, {
-	type ChannelModel,
 	type Channel,
+	type ChannelModel,
 	type ConsumeMessage,
 } from 'amqplib'
 

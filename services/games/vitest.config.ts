@@ -22,10 +22,7 @@ export default defineConfig({
 		environment: 'node',
 		setupFiles: ['tests/setup.ts'],
 		include: ['src/**/*.spec.ts', 'tests/**/*.spec.ts'],
-		exclude: [
-			'**/node_modules/**',
-			'tests/e2e/cross-service.e2e.spec.ts',
-		],
+		exclude: ['**/node_modules/**', 'tests/e2e/cross-service.e2e.spec.ts'],
 		pool: 'forks',
 		forks: { singleFork: true },
 		fileParallelism: false,
