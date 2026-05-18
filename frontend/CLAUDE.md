@@ -19,7 +19,7 @@ Always use **Bun**, not npm/pnpm/yarn. The `pnpm` key in `package.json` is vesti
 - TanStack Start (Router + Start + Query, SSR via `setupRouterSsrQueryIntegration`)
 - React 19, Vite 8, TypeScript 6
 - Tailwind CSS v4 (via `@tailwindcss/vite`)
-- Paraglide JS for i18n (URL-based locale strategy)
+- i18n: **none for now** (wuchale removed; plain English JSX strings only — re-introduce later)
 - Biome 2.4 for lint + format (tabs, double quotes)
 - Vitest + Testing Library + jsdom
 - Zod + `@t3-oss/env-core` for env validation
@@ -29,29 +29,24 @@ Always use **Bun**, not npm/pnpm/yarn. The `pnpm` key in `package.json` is vesti
 ```
 src/
   routes/                   # file-based routes (TanStack Router)
-    __root.tsx              # shell, devtools, <html> with locale
+    __root.tsx              # shell, devtools
     index.tsx
   routeTree.gen.ts          # AUTO-GENERATED, do not edit, biome-ignored
   integrations/
     tanstack-query/         # QueryClient context + devtools panel
   components/
-  paraglide/                # AUTO-GENERATED i18n runtime + messages
   router.tsx                # getRouter() — wires Query SSR
   env.ts                    # typed env (VITE_* client, SERVER_URL server)
   styles.css                # Tailwind entry (biome-ignored)
-messages/{en,de}.json       # i18n source — edit these, not src/paraglide/
-project.inlang/             # Paraglide project config
 ```
 
 ## Path aliases
 
 Both `#/*` and `@/*` resolve to `src/*`. Prefer `#/*` (matches `package.json#imports`, works at runtime too).
 
-## i18n (Paraglide)
+## i18n
 
-- Edit translations in `messages/{locale}.json`. Never edit `src/paraglide/` — regenerated on dev/build.
-- Locale lives in URL (`strategy: ["url", "baseLocale"]`); base locale is `en`. Add new locales in `project.inlang/settings.json`.
-- Use `m.key()` from `#/paraglide/messages`; runtime helpers (`getLocale`, `setLocale`, `locales`) from `#/paraglide/runtime`.
+Removed for now. Write plain English in JSX. Re-introduce a translation pipeline later (wuchale was tried + removed — pick fresh if needed).
 
 ## Env vars
 

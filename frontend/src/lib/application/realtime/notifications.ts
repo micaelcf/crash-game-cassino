@@ -52,8 +52,9 @@ function getSnapshot(): Notification[] {
 	return buffer;
 }
 
+const EMPTY: readonly Notification[] = [];
 function getServerSnapshot(): Notification[] {
-	return [];
+	return EMPTY as Notification[];
 }
 
 export function useNotifications(): Notification[] {

@@ -4,6 +4,8 @@
 
 export type {
 	BetDto,
+	LeaderboardEntryDto,
+	LeaderboardResponse,
 	PagedResult,
 	PaginationParams,
 	PlaceBetBody,
@@ -11,4 +13,9 @@ export type {
 	RoundVerifyDto,
 	WalletDto,
 } from "@crash/contracts";
-export { BetStatus, RoundStatus } from "@crash/contracts";
+export {
+	BetStatus,
+	LEADERBOARD_WINDOWS,
+	LeaderboardWindow,
+	RoundStatus,
+} from "@crash/contracts";

@@ -12,4 +12,9 @@ export const qk = {
 		me: (page: number, pageSize: number) =>
 			["bets", "me", { page, pageSize }] as const,
 	},
+	leaderboard: {
+		all: () => ["leaderboard"] as const,
+		list: (window: "24h" | "7d", limit: number) =>
+			["leaderboard", window, limit] as const,
+	},
 } as const;

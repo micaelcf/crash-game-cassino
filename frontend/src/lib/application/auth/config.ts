@@ -1,7 +1,7 @@
 import type { LogtoConfig } from "@logto/react";
 import { env } from "#/env";
 
-export const POST_SIGN_IN_REDIRECT = "/dashboard";
+export const POST_SIGN_IN_REDIRECT = "/play";
 export const POST_SIGN_OUT_REDIRECT = "/";
 export const CALLBACK_PATH = "/callback";
 

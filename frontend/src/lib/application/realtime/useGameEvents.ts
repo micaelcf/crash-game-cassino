@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { BetDto, RoundDto } from "#/lib/api/types";
+import { BetStatus, RoundStatus } from "#/lib/api/types";
 import type { GameEvent } from "#/lib/api/ws/events";
 import { useCurrentUserSub } from "#/lib/application/auth/useCurrentUserSub";
 import { qk } from "#/lib/application/keys";
@@ -34,7 +35,7 @@ export function useGameEvents(): void {
 				}
 				return {
 					...prev,
-					status: "FLYING",
+					status: RoundStatus.FLYING,
 					flyingStartedAt: payload.startTime,
 					growthRate: payload.growthRate,
 				};
@@ -50,7 +51,7 @@ export function useGameEvents(): void {
 				}
 				return {
 					...prev,
-					status: "CRASHED",
+					status: RoundStatus.CRASHED,
 					crashPointHundredths: payload.crashPointHundredths,
 					serverSeed: payload.serverSeed,
 					clientSeed: payload.clientSeed,
@@ -61,6 +62,10 @@ export function useGameEvents(): void {
 			queryClient.invalidateQueries({ queryKey: qk.wallet.me() });
 			queryClient.invalidateQueries({
 				queryKey: ["rounds", "history"],
+				exact: false,
+			});
+			queryClient.invalidateQueries({
+				queryKey: qk.leaderboard.all(),
 				exact: false,
 			});
 		};
@@ -78,7 +83,7 @@ export function useGameEvents(): void {
 			if (
 				cached &&
 				cached.id === payload.roundId &&
-				cached.status === "CRASHED"
+				cached.status === RoundStatus.CRASHED
 			) {
 				if (payload.userId === userSub) {
 					pushNotification(
@@ -104,7 +109,7 @@ export function useGameEvents(): void {
 				const merged: BetDto[] = exists
 					? prev.bets.map((b) =>
 							b.id === payload.betId
-								? ({ ...b, status: "CONFIRMED" } satisfies BetDto)
+								? ({ ...b, status: BetStatus.CONFIRMED } satisfies BetDto)
 								: b,
 						)
 					: [
@@ -114,7 +119,7 @@ export function useGameEvents(): void {
 								userId: payload.userId,
 								username: payload.username,
 								amountCents: payload.amountCents,
-								status: "CONFIRMED",
+								status: BetStatus.CONFIRMED,
 								cashoutMultiplierHundredths: null,
 								payoutCents: null,
 								createdAt: new Date().toISOString(),
@@ -135,7 +140,7 @@ export function useGameEvents(): void {
 						b.id === payload.betId
 							? {
 									...b,
-									status: "WON",
+									status: BetStatus.WON,
 									cashoutMultiplierHundredths: payload.multiplierHundredths,
 									payoutCents: payload.payoutCents,
 								}

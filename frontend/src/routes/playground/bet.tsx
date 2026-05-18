@@ -7,6 +7,7 @@ import { JsonView } from "#/components/playground/JsonView";
 import { MultiplierDisplay } from "#/components/playground/MultiplierDisplay";
 import { PhaseBadge } from "#/components/playground/PhaseBadge";
 import { Section } from "#/components/playground/Section";
+import { BetStatus, RoundStatus } from "#/lib/api/types";
 import { useRequireAuth } from "#/lib/application/auth/useRequireAuth";
 import { useCurrentRound } from "#/lib/application/rounds/queries";
 import { computeClockOffset } from "#/lib/domain/clock";
@@ -28,8 +29,8 @@ function BetSection() {
 
 	const myBet = round?.bets.find((b) => b.userId === sub);
 	const phase = round?.status;
-	const flying = phase === "FLYING";
-	const crashed = phase === "CRASHED";
+	const flying = phase === RoundStatus.FLYING;
+	const crashed = phase === RoundStatus.CRASHED;
 	const startMs = round?.flyingStartedAt
 		? Date.parse(round.flyingStartedAt)
 		: null;
@@ -37,8 +38,8 @@ function BetSection() {
 		? computeClockOffset(round.flyingStartedAt)
 		: 0;
 
-	const canBet = phase === "BETTING_PHASE" && !myBet;
-	const canCashOut = flying && myBet?.status === "CONFIRMED";
+	const canBet = phase === RoundStatus.BETTING_PHASE && !myBet;
+	const canCashOut = flying && myBet?.status === BetStatus.CONFIRMED;
 
 	return (
 		<div className="space-y-4">

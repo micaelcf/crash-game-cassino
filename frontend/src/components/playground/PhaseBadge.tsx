@@ -1,13 +1,13 @@
-import type { RoundStatus } from "#/lib/api/types";
+import { RoundStatus } from "#/lib/api/types";
 import { Pill } from "./AuthStatus";
 
 export function PhaseBadge({ phase }: { phase: RoundStatus | undefined }) {
 	const tone =
-		phase === "FLYING"
+		phase === RoundStatus.FLYING
 			? "emerald"
-			: phase === "CRASHED"
+			: phase === RoundStatus.CRASHED
 				? "rose"
-				: phase === "BETTING_PHASE"
+				: phase === RoundStatus.BETTING_PHASE
 					? "amber"
 					: "slate";
 	return <Pill label={`phase: ${phase ?? "—"}`} tone={tone} />;

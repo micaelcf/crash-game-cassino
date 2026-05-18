@@ -32,8 +32,9 @@ function getSnapshot(): LoggedEvent[] {
 	return buffer;
 }
 
+const EMPTY: readonly LoggedEvent[] = [];
 function getServerSnapshot(): LoggedEvent[] {
-	return [];
+	return EMPTY as LoggedEvent[];
 }
 
 export function useEventLog(): LoggedEvent[] {

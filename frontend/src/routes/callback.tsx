@@ -1,5 +1,7 @@
 import { useHandleSignInCallback } from "@logto/react";
+import { WarningIcon } from "@phosphor-icons/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AppShell } from "#/components/shared/AppShell";
 import { POST_SIGN_IN_REDIRECT } from "#/lib/application/auth/config";
 
 export const Route = createFileRoute("/callback")({ component: CallbackPage });
@@ -12,18 +14,27 @@ function CallbackPage() {
 
 	if (error) {
 		return (
-			<main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-				<div className="max-w-md rounded-xl border border-red-800 bg-red-950/40 p-6">
-					<h1 className="text-xl font-semibold text-red-300">Sign-in failed</h1>
-					<p className="mt-2 text-sm text-red-200">{error.message}</p>
+			<AppShell>
+				<div className="mx-auto flex w-full max-w-md flex-1 items-center justify-center px-4">
+					<div className="rounded-(--radius-card) bg-(--color-danger)/10 p-6 ring-1 ring-inset ring-(--color-danger)/40">
+						<h1 className="flex items-center gap-2 text-lg font-bold text-(--color-danger)">
+							<WarningIcon size={18} weight="duotone" />
+							Sign-in failed
+						</h1>
+						<p className="mt-2 text-sm text-(--color-fg-muted)">
+							{error.message}
+						</p>
+					</div>
 				</div>
-			</main>
+			</AppShell>
 		);
 	}
 
 	return (
-		<main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-			<p>{isLoading ? "Completing sign-in..." : "Redirecting..."}</p>
-		</main>
+		<AppShell>
+			<div className="flex flex-1 items-center justify-center text-(--color-fg-muted)">
+				<p>{isLoading ? "Completing sign-in…" : "Redirecting…"}</p>
+			</div>
+		</AppShell>
 	);
 }
