@@ -1,3 +1,8 @@
+import {
+	type AuthUser,
+	type JwtPayload,
+	toAuthUser,
+} from '@infrastructure/auth/auth-user'
 import { Injectable } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { passportJwtSecret } from 'jwks-rsa'
@@ -19,9 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		})
 	}
 
-	async validate(payload: any) {
-		// Retorna o payload para ser acessível via req.user
-		// Logto geralmente usa 'sub' como user ID. Keycloak também.
-		return { sub: payload.sub, ...payload }
+	async validate(payload: JwtPayload): Promise<AuthUser> {
+		return toAuthUser(payload)
 	}
 }

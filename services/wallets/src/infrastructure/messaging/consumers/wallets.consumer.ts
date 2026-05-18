@@ -5,6 +5,18 @@ import { Controller } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices'
 
+interface BetPlacedPayload {
+	userId: string
+	roundId: string
+	betAmount?: string
+	amount?: string
+}
+
+interface PlayerWonPayload {
+	userId: string
+	amount: string
+}
+
 const messageIdOf = (ctx: RmqContext, fallback: unknown): string => {
 	const msg = ctx.getMessage()
 	return (
@@ -22,14 +34,21 @@ export class WalletsConsumer {
 	) {}
 
 	@EventPattern('bet.placed')
-	async onBetPlaced(@Payload() data: any, @Ctx() ctx: RmqContext) {
+	async onBetPlaced(
+		@Payload() data: BetPlacedPayload,
+		@Ctx() ctx: RmqContext,
+	) {
 		const messageId = messageIdOf(ctx, data)
+		const amount = data.betAmount ?? data.amount
+		if (amount === undefined) {
+			throw new Error('bet.placed payload missing betAmount/amount')
+		}
 		await RequestContext.create(this.orm.em, () =>
 			this.commandBus.execute(
 				new DebitWalletCommand(
 					messageId,
 					data.userId,
-					BigInt(data.betAmount ?? data.amount),
+					BigInt(amount),
 					data.roundId,
 				),
 			),
@@ -37,7 +56,10 @@ export class WalletsConsumer {
 	}
 
 	@EventPattern('player.won')
-	async onPlayerWon(@Payload() data: any, @Ctx() ctx: RmqContext) {
+	async onPlayerWon(
+		@Payload() data: PlayerWonPayload,
+		@Ctx() ctx: RmqContext,
+	) {
 		const messageId = messageIdOf(ctx, data)
 		await RequestContext.create(this.orm.em, () =>
 			this.commandBus.execute(

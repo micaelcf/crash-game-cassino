@@ -2,6 +2,7 @@ import { CreateWalletCommand } from '@application/wallet/dtos/create-wallet.comm
 import { GetWalletQuery } from '@application/wallet/dtos/get-wallet.query'
 import { toWalletDto, WalletDto } from '@application/wallet/dtos/wallet.dto'
 import { Wallet } from '@domain/wallet/wallet.entity'
+import type { AuthenticatedRequest } from '@infrastructure/auth/auth-user'
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard'
 import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common'
 import { CommandBus, QueryBus } from '@nestjs/cqrs'
@@ -26,7 +27,7 @@ export class WalletsController {
 	@Post()
 	@ApiOperation({ summary: 'Create a wallet for the authenticated player.' })
 	@ApiCreatedResponse({ description: 'Wallet created.', type: WalletDto })
-	async createWallet(@Req() req: any): Promise<WalletDto> {
+	async createWallet(@Req() req: AuthenticatedRequest): Promise<WalletDto> {
 		const wallet: Wallet = await this.commandBus.execute(
 			new CreateWalletCommand(req.user.sub),
 		)
@@ -36,7 +37,7 @@ export class WalletsController {
 	@Get('me')
 	@ApiOperation({ summary: 'Return the authenticated player wallet.' })
 	@ApiOkResponse({ description: 'Wallet found.', type: WalletDto })
-	async getMyWallet(@Req() req: any): Promise<WalletDto> {
+	async getMyWallet(@Req() req: AuthenticatedRequest): Promise<WalletDto> {
 		const wallet: Wallet = await this.queryBus.execute(
 			new GetWalletQuery(req.user.sub),
 		)

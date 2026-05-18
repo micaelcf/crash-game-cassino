@@ -1,3 +1,8 @@
+import {
+	type AuthUser,
+	type JwtPayload,
+	toAuthUser,
+} from '@infrastructure/auth/auth-user'
 import { Injectable } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { passportJwtSecret } from 'jwks-rsa'
@@ -19,15 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		})
 	}
 
-	async validate(payload: any) {
-		return {
-			sub: payload.sub,
-			username:
-				payload.username ??
-				payload.preferred_username ??
-				payload.email ??
-				payload.sub,
-			...payload,
-		}
+	async validate(payload: JwtPayload): Promise<AuthUser> {
+		return toAuthUser(payload)
 	}
 }

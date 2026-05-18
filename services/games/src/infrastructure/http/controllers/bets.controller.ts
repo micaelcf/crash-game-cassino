@@ -12,6 +12,7 @@ import {
 	RoundNotBettingException,
 	RoundNotFlyingException,
 } from '@domain/round/round.exceptions'
+import type { AuthenticatedRequest } from '@infrastructure/auth/auth-user'
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard'
 import { PaginationDto } from '@infrastructure/http/dtos/pagination.dto'
 import { PlaceBetDto } from '@infrastructure/http/dtos/place-bet.dto'
@@ -49,7 +50,7 @@ export class BetsController {
 	@Get('bets/me')
 	@ApiOperation({ summary: 'List bets placed by the authenticated player.' })
 	@ApiOkResponse({ description: 'Paginated list of the player bets.' })
-	async myBets(@Req() req: any, @Query() page: PaginationDto) {
+	async myBets(@Req() req: AuthenticatedRequest, @Query() page: PaginationDto) {
 		return this.queryBus.execute(
 			new GetMyBetsQuery(req.user.sub, page.page, page.pageSize),
 		)
@@ -59,7 +60,7 @@ export class BetsController {
 	@HttpCode(201)
 	@ApiOperation({ summary: 'Place a bet on the current round.' })
 	@ApiCreatedResponse({ description: 'Bet accepted; persisted in PENDING.' })
-	async placeBet(@Req() req: any, @Body() body: PlaceBetDto) {
+	async placeBet(@Req() req: AuthenticatedRequest, @Body() body: PlaceBetDto) {
 		let amountCents: bigint
 		try {
 			amountCents = BigInt(body.amount)
@@ -84,7 +85,7 @@ export class BetsController {
 	@HttpCode(200)
 	@ApiOperation({ summary: 'Cash out the current bet at the live multiplier.' })
 	@ApiOkResponse({ description: 'Bet settled as WON with the payout.' })
-	async cashOut(@Req() req: any) {
+	async cashOut(@Req() req: AuthenticatedRequest) {
 		try {
 			const bet: Bet = await this.commandBus.execute(
 				new CashOutCommand(req.user.sub),

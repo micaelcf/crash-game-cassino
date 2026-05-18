@@ -5,6 +5,17 @@ import { Controller } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs'
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices'
 
+interface WalletDebitedPayload {
+	betId: string
+	playerId?: string
+	amount?: string
+}
+
+interface WalletDebitFailedPayload {
+	betId: string
+	reason?: string
+}
+
 const messageIdOf = (ctx: RmqContext, fallback: unknown): string => {
 	const msg = ctx.getMessage()
 	return (
@@ -22,7 +33,10 @@ export class GamesConsumer {
 	) {}
 
 	@EventPattern('wallet.debited')
-	async onWalletDebited(@Payload() data: any, @Ctx() ctx: RmqContext) {
+	async onWalletDebited(
+		@Payload() data: WalletDebitedPayload,
+		@Ctx() ctx: RmqContext,
+	) {
 		const messageId = messageIdOf(ctx, data)
 		await RequestContext.create(this.orm.em, () =>
 			this.commandBus.execute(new WalletDebitedCommand(messageId, data.betId)),
@@ -30,7 +44,10 @@ export class GamesConsumer {
 	}
 
 	@EventPattern('wallet.debit_failed')
-	async onWalletDebitFailed(@Payload() data: any, @Ctx() ctx: RmqContext) {
+	async onWalletDebitFailed(
+		@Payload() data: WalletDebitFailedPayload,
+		@Ctx() ctx: RmqContext,
+	) {
 		const messageId = messageIdOf(ctx, data)
 		await RequestContext.create(this.orm.em, () =>
 			this.commandBus.execute(
