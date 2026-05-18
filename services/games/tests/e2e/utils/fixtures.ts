@@ -1,6 +1,51 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { Bet, type BetStatus } from '@domain/bet/bet.entity'
 import { Round, type RoundStatus } from '@domain/round/round.entity'
 import type { MikroORM } from '@mikro-orm/core'
+
+interface SeedTableRow {
+	targetHundredths: number
+	serverSeed: string
+	clientSeed: string
+	nonce: number
+	hashCommitment: string
+}
+
+let seedTableCache: Map<number, SeedTableRow> | null = null
+
+const loadSeedTable = (): Map<number, SeedTableRow> => {
+	if (seedTableCache) return seedTableCache
+	const path = resolve(
+		import.meta.dir,
+		'..',
+		'..',
+		'..',
+		'..',
+		'..',
+		'scripts',
+		'fixtures',
+		'crash-seeds.json',
+	)
+	const rows = JSON.parse(readFileSync(path, 'utf8')) as SeedTableRow[]
+	seedTableCache = new Map(rows.map((r) => [r.targetHundredths, r]))
+	return seedTableCache
+}
+
+/**
+ * Look up a pre-computed (serverSeed, clientSeed, nonce) triple that makes the
+ * provably-fair algorithm produce exactly the requested crash point. Use this
+ * to set up deterministic E2E scenarios without bypassing the round entity.
+ */
+export const seedTableEntry = (targetHundredths: number): SeedTableRow => {
+	const row = loadSeedTable().get(targetHundredths)
+	if (!row) {
+		throw new Error(
+			`no pre-computed seed for ${targetHundredths / 100}x — extend scripts/fixtures/crash-seeds.json`,
+		)
+	}
+	return row
+}
 
 export interface SeedRoundInput {
 	status?: RoundStatus
@@ -60,4 +105,30 @@ export const seedBet = async (
 	if (input.status) bet.status = input.status
 	await em.flush()
 	return bet
+}
+
+/**
+ * Convenience helper that seeds a CRASHED round whose provably-fair triple
+ * verifies to exactly `targetHundredths`. Pair with `/games/rounds/:id/verify`
+ * to assert end-to-end determinism.
+ */
+export const seedCrashedRoundAt = async (
+	orm: MikroORM,
+	targetHundredths: number,
+	overrides: Partial<SeedRoundInput> = {},
+): Promise<Round> => {
+	const row = seedTableEntry(targetHundredths)
+	const now = new Date()
+	return seedRound(orm, {
+		nonce: row.nonce,
+		serverSeedHash: row.hashCommitment,
+		serverSeed: row.serverSeed,
+		clientSeed: row.clientSeed,
+		crashPointHundredths: row.targetHundredths,
+		bettingEndsAt: new Date(now.getTime() - 10_000),
+		flyingStartedAt: new Date(now.getTime() - 5_000),
+		crashedAt: now,
+		status: 'CRASHED' as RoundStatus,
+		...overrides,
+	})
 }

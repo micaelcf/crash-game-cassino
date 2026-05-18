@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import {
 	generateHashChain,
 	ProvablyFairService,
@@ -56,6 +58,36 @@ describe('ProvablyFairService', () => {
 			const rate = busts / N
 			expect(rate).toBeGreaterThan(0.005)
 			expect(rate).toBeLessThan(0.02)
+		})
+	})
+
+	describe('pre-computed seed table (scripts/fixtures/crash-seeds.json)', () => {
+		interface SeedRow {
+			targetHundredths: number
+			serverSeed: string
+			clientSeed: string
+			hashCommitment: string
+		}
+		const seedPath = resolve(
+			__dirname,
+			'..',
+			'..',
+			'..',
+			'..',
+			'..',
+			'scripts',
+			'fixtures',
+			'crash-seeds.json',
+		)
+		const rows = JSON.parse(readFileSync(seedPath, 'utf8')) as SeedRow[]
+
+		it.each(
+			rows,
+		)('serverSeed for $targetHundredths verifies under the production formula', (row) => {
+			expect(svc.crashPointHundredths(row.serverSeed, row.clientSeed)).toBe(
+				row.targetHundredths,
+			)
+			expect(svc.commitment(row.serverSeed)).toBe(row.hashCommitment)
 		})
 	})
 

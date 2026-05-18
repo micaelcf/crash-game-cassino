@@ -1,0 +1,72 @@
+[
+	{
+		"targetHundredths": 100,
+		"serverSeed": "c39f5d0976b35482a529814206c653c303f9db298999d44d774f913b5054b8a3",
+		"clientSeed": "btc-block-default",
+		"nonce": 33,
+		"hashCommitment": "08b8fe752a0fc643eff1bd383d34ac8fc671cfa680c2aa032cc95bba6927f925"
+	},
+	{
+		"targetHundredths": 110,
+		"serverSeed": "39d0292b3c118c83a2f83a027d5f56e51a229f41c79699dd90f86283c2c4964e",
+		"clientSeed": "btc-block-default",
+		"nonce": 152,
+		"hashCommitment": "49a2376465ddc7bbef47c4884f9e7c5d5c43483781dcb5b475a99d93f6846cc9"
+	},
+	{
+		"targetHundredths": 125,
+		"serverSeed": "e627a0a2ba9970280344279b0df2085d9a5046adb2b6dd2391c74bdd0c70ce9a",
+		"clientSeed": "btc-block-default",
+		"nonce": 230,
+		"hashCommitment": "4dfdcd79df2cb882700139b268a5e4c885c1e419f4b6e16a398652e2c1774bdf"
+	},
+	{
+		"targetHundredths": 150,
+		"serverSeed": "28e71105b2da80fb21b4b2987733ebbfe517bade0fdff64033e2457efc97711c",
+		"clientSeed": "btc-block-default",
+		"nonce": 118,
+		"hashCommitment": "73fcb251159dba9d225eda037a9beecd94c4364e65a04ddd9f3cee8df1473e28"
+	},
+	{
+		"targetHundredths": 175,
+		"serverSeed": "b6950009128c6d2dff24872c769c01bead043167aac46984a7e4c98c48898fd9",
+		"clientSeed": "btc-block-default",
+		"nonce": 133,
+		"hashCommitment": "6466e7cd4713fec027f070c3f79a3df592270714fa3d4b6180d2d531a439cbce"
+	},
+	{
+		"targetHundredths": 200,
+		"serverSeed": "cbd4fe0adc919321502b1827a1d6fcefb9d384a27dcb86a1076152c9a3e22994",
+		"clientSeed": "btc-block-default",
+		"nonce": 212,
+		"hashCommitment": "b217b18408c03a7306715578841179c47bde748cc21062eb3e615e13b3cf8efe"
+	},
+	{
+		"targetHundredths": 300,
+		"serverSeed": "63d97c9b9ccabaae20dff3b5bf8c8c54b0190d82ac9f5ad28dd9097115eb81d7",
+		"clientSeed": "btc-block-default",
+		"nonce": 416,
+		"hashCommitment": "12c989a998f1921f200766aa758d25ef664879c76855466badc452b177492e46"
+	},
+	{
+		"targetHundredths": 500,
+		"serverSeed": "c7b4f5fa336b3de3edb79d6499c280681628903776f5d8141bf48b815d86247b",
+		"clientSeed": "btc-block-default",
+		"nonce": 2719,
+		"hashCommitment": "07f240450223bf223a2c00a9fa198f5a8f6501db2a31be2591ebfc656f288939"
+	},
+	{
+		"targetHundredths": 1000,
+		"serverSeed": "8440f4ed8d65780de69d5d0a8fb510677a7e26551a30348548fec91755de4a78",
+		"clientSeed": "btc-block-default",
+		"nonce": 48193,
+		"hashCommitment": "6b928deb35e8a162dd9656b68ab2cbf4c5da3b2ec02e514bed552e5b28b9d959"
+	},
+	{
+		"targetHundredths": 10000,
+		"serverSeed": "488458d9bdd1a1fbcd52aafccbb91145e789cc0e51a2ad17d7cfb8a4d63e38a7",
+		"clientSeed": "btc-block-default",
+		"nonce": 316135,
+		"hashCommitment": "d2054740011c8999b8d36e2cd3fd1963c2949da0a00579d93313bc08a226136a"
+	}
+]
