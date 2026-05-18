@@ -1,14 +1,15 @@
-import { Injectable } from '@nestjs/common'
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
-import type { Server } from 'socket.io'
-import type {
+import {
+	BetCancelledPayload,
 	BetCashedOutPayload,
 	BetPlacedPayload,
-	GameBroadcaster,
+	type GameBroadcaster,
 	RoundBettingPayload,
 	RoundCrashedPayload,
 	RoundStartedPayload,
-} from './game.gateway.interface'
+} from '@infrastructure/websocket/game.gateway.interface'
+import { Injectable } from '@nestjs/common'
+import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets'
+import { type Server } from 'socket.io'
 
 @Injectable()
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -34,5 +35,9 @@ export class GameGateway implements GameBroadcaster {
 
 	emitBetCashedOut(payload: BetCashedOutPayload): void {
 		this.server.emit('bet.cashed_out', payload)
+	}
+
+	emitBetCancelled(payload: BetCancelledPayload): void {
+		this.server.emit('bet.cancelled', payload)
 	}
 }

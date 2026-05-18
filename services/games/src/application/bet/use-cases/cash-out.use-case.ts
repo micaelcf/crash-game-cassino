@@ -1,13 +1,17 @@
+import { CashOutCommand } from '@application/bet/dtos/cash-out.command'
+import { Bet, BetStatus } from '@domain/bet/bet.entity'
+import { NoActiveBetException } from '@domain/bet/bet.exceptions'
+import { Round, RoundStatus } from '@domain/round/round.entity'
+import { RoundNotFlyingException } from '@domain/round/round.exceptions'
+import { CLOCK, type Clock } from '@domain/shared/clock'
+import { BaseRepository } from '@infrastructure/db/base.repository'
+import { EventPublisher } from '@infrastructure/messaging/outbox/event-publisher.service'
+import {
+	GAME_BROADCASTER,
+	type GameBroadcaster,
+} from '@infrastructure/websocket/game.gateway.interface'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { Inject, Injectable } from '@nestjs/common'
-import { Bet, BetStatus } from '../../../domain/bet/bet.entity'
-import { NoActiveBetException } from '../../../domain/bet/bet.exceptions'
-import { Round, RoundStatus } from '../../../domain/round/round.entity'
-import { RoundNotFlyingException } from '../../../domain/round/round.exceptions'
-import { CLOCK, type Clock } from '../../../domain/shared/clock'
-import { BaseRepository } from '../../../infrastructure/db/base.repository'
-import { EventPublisher } from '../../../infrastructure/messaging/outbox/event-publisher.service'
-import { CashOutCommand } from '../dtos/cash-out.command'
 
 @Injectable()
 export class CashOutUseCase {
@@ -18,6 +22,8 @@ export class CashOutUseCase {
 		private readonly bets: BaseRepository<Bet>,
 		private readonly events: EventPublisher,
 		@Inject(CLOCK) private readonly clock: Clock,
+		@Inject(GAME_BROADCASTER)
+		private readonly broadcaster: GameBroadcaster,
 	) {}
 
 	async execute(command: CashOutCommand): Promise<Bet> {
@@ -48,10 +54,20 @@ export class CashOutUseCase {
 			roundId: round.id,
 			betId: bet.id,
 			multiplierHundredths: multiplier,
-			amount: bet.payoutCents!.toString(),
+			amount: (bet.payoutCents ?? 0).toString(),
 		})
 
 		await this.bets.flush()
+
+		this.broadcaster.emitBetCashedOut({
+			roundId: round.id,
+			betId: bet.id,
+			userId: bet.userId,
+			username: bet.username,
+			multiplierHundredths: multiplier,
+			payoutCents: (bet.payoutCents ?? 0).toString(),
+		})
+
 		return bet
 	}
 }
