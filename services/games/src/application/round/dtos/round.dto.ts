@@ -29,6 +29,7 @@ export const toRoundDto = (round: Round, bets: Bet[]): RoundDto => ({
 	growthRate: round.growthRate,
 	crashPointHundredths:
 		round.status === RoundStatus.CRASHED ? round.crashPointHundredths : null,
-	serverSeed: round.status === RoundStatus.CRASHED ? round.serverSeed : null,
+	serverSeed:
+		round.status === RoundStatus.CRASHED ? (round.serverSeed ?? null) : null,
 	bets: bets.map(toBetDto),
 })

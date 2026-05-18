@@ -1,21 +1,25 @@
 import { Type } from '@mikro-orm/core'
 
-export class BigIntType extends Type<bigint, string> {
-	convertToDatabaseValue(value: bigint | undefined): string {
+export class BigIntType extends Type<bigint | null | undefined, string | null> {
+	override convertToDatabaseValue(
+		value: bigint | null | undefined,
+	): string | null {
 		if (value === undefined || value === null) {
-			return value as any
+			return value ?? null
 		}
 		return value.toString()
 	}
 
-	convertToJSValue(value: string | undefined): bigint {
+	override convertToJSValue(
+		value: string | null | undefined,
+	): bigint | null | undefined {
 		if (value === undefined || value === null) {
-			return value as any
+			return value
 		}
 		return BigInt(value)
 	}
 
-	getColumnType(): string {
+	override getColumnType(): string {
 		return 'bigint'
 	}
 }

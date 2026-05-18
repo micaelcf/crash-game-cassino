@@ -17,7 +17,8 @@ export class BaseRepository<T extends object> extends EntityRepository<T> {
 	}
 
 	async removeAndFlush(entity: T): Promise<void> {
-		await this.em.removeAndFlush(entity)
+		this.em.remove(entity)
+		await this.em.flush()
 	}
 
 	async flush(): Promise<void> {

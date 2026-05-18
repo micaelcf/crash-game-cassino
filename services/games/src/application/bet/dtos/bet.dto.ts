@@ -17,7 +17,7 @@ export const toBetDto = (bet: Bet): BetDto => ({
 	username: bet.username,
 	amountCents: bet.amountCents.toString(),
 	status: bet.status,
-	cashoutMultiplierHundredths: bet.cashoutMultiplierHundredths,
+	cashoutMultiplierHundredths: bet.cashoutMultiplierHundredths ?? null,
 	payoutCents: bet.payoutCents != null ? bet.payoutCents.toString() : null,
 	createdAt: bet.createdAt.toISOString(),
 })
