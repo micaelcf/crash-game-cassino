@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: Crash
+    orgId: 1
+    folder: Crash
+    type: file
+    disableDeletion: true
+    editable: true
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards

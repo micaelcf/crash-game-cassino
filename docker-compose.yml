@@ -188,6 +188,43 @@ services:
       start_period: 30s
 
   # ---------------------------------------------------------------------------
+  # Prometheus — scrapes /metrics from games + wallets
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./docker/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - games
+      - wallets
+
+  # ---------------------------------------------------------------------------
+  # Grafana — pre-provisioned Crash dashboard
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.3.0
+    ports:
+      - "3030:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./docker/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  # ---------------------------------------------------------------------------
   # Frontend
   # ---------------------------------------------------------------------------
   frontend:
@@ -204,3 +241,5 @@ volumes:
   postgres_test_data:
   rabbitmq_data:
   rabbitmq_test_data:
+  prometheus_data:
+  grafana_data:
