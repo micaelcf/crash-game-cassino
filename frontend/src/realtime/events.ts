@@ -39,12 +39,20 @@ export interface BetCashedOutPayload {
 	payoutCents: string;
 }
 
+export interface BetCancelledPayload {
+	roundId: string;
+	betId: string;
+	userId: string;
+	reason: string;
+}
+
 export type GameEvent =
 	| { type: "round.betting"; payload: RoundBettingPayload }
 	| { type: "round.started"; payload: RoundStartedPayload }
 	| { type: "round.crashed"; payload: RoundCrashedPayload }
 	| { type: "bet.placed"; payload: BetPlacedPayload }
-	| { type: "bet.cashed_out"; payload: BetCashedOutPayload };
+	| { type: "bet.cashed_out"; payload: BetCashedOutPayload }
+	| { type: "bet.cancelled"; payload: BetCancelledPayload };
 
 export const GAME_EVENT_NAMES = [
 	"round.betting",
@@ -52,4 +60,5 @@ export const GAME_EVENT_NAMES = [
 	"round.crashed",
 	"bet.placed",
 	"bet.cashed_out",
+	"bet.cancelled",
 ] as const;

@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { AuthStatus } from "#/components/playground/AuthStatus";
+import { Notifications } from "#/components/playground/Notifications";
 import { PhaseBadge } from "#/components/playground/PhaseBadge";
 import { PlaygroundNav } from "#/components/playground/PlaygroundNav";
 import { SocketStatus } from "#/components/playground/SocketStatus";
@@ -28,6 +29,7 @@ function PlaygroundLayout() {
 			<div className="mx-auto max-w-5xl px-6 py-6">
 				<Outlet />
 			</div>
+			<Notifications />
 		</main>
 	);
 }
