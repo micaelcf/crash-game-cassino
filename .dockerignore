@@ -1,0 +1,29 @@
+# Keep build contexts lean now that compose uses the repo root.
+
+**/node_modules
+**/dist
+**/.output
+**/coverage
+**/tsconfig.tsbuildinfo
+**/.turbo
+**/.cache
+
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+.claude
+.agents
+.pi
+
+docker/postgres/*.log
+docker-compose*.yml
+*.md
+!packages/contracts/**/*.md
+
+# Local env files — services read .env via compose `env_file`, never bake into image
+.env
+.env.*
+!**/.env.example
