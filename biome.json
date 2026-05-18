@@ -1,7 +1,20 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
 	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": false },
-	"files": { "ignoreUnknown": false },
+	"files": {
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!.pi",
+			"!.agents",
+			"!**/.claude",
+			"!**/graphify-out",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/.output",
+			"!**/coverage"
+		]
+	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
@@ -38,5 +51,20 @@
 	"assist": {
 		"enabled": true,
 		"actions": { "source": { "organizeImports": "on" } }
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["services/*/src/**/*.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useImportType": "off"
+					},
+					"correctness": {
+						"noUnusedImports": "off"
+					}
+				}
+			}
+		}
+	]
 }
