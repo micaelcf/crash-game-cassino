@@ -1,20 +1,21 @@
 {
-  "name": "crash-game",
-  "private": true,
-  "workspaces": ["services/*", "packages/*", "frontend"],
-  "scripts": {
-    "docker:up": "bun scripts/compose.ts up -d postgres rabbitmq logto kong games wallets && bun scripts/seed-logto.ts && bun scripts/compose.ts up -d --build frontend",
-    "docker:down": "bun scripts/compose.ts down",
-    "docker:prune": "bun scripts/compose.ts down -v --rmi all --remove-orphans",
-    "seed:logto": "bun scripts/seed-logto.ts"
-  },
-  "devDependencies": {
-    "bun-types": "latest",
-    "@types/bun": "latest"
-  },
-  "module": "index.ts",
-  "type": "module",
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "crash-game",
+	"private": true,
+	"workspaces": ["services/*", "packages/*", "frontend"],
+	"scripts": {
+		"docker:up": "bun scripts/compose.ts up -d postgres rabbitmq logto kong games wallets && bun scripts/seed-logto.ts && bun scripts/compose.ts up -d --build frontend",
+		"docker:down": "bun scripts/compose.ts down",
+		"docker:prune": "bun scripts/compose.ts down -v --rmi all --remove-orphans",
+		"seed:logto": "bun scripts/seed-logto.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"bun-types": "latest",
+		"ts-morph": "^28.0.0"
+	},
+	"module": "index.ts",
+	"type": "module",
+	"peerDependencies": {
+		"typescript": "^5"
+	}
 }
