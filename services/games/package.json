@@ -50,6 +50,7 @@
 		"testcontainers": "^10.18.0",
 		"typescript": "^5.8.3",
 		"unplugin-swc": "^1.5.7",
+		"vite-tsconfig-paths": "^6.1.1",
 		"vitest": "^4.1.6"
 	}
 }
