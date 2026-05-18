@@ -13,6 +13,7 @@
 		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
+		"@crash/contracts": "workspace:*",
 		"@fastify/static": "^8.0.0",
 		"@mikro-orm/core": "^7.0.16",
 		"@mikro-orm/migrations": "^7.0.16",

@@ -1,45 +1,19 @@
-export interface RoundBettingPayload {
-	roundId: string
-	hashCommitment: string
-	bettingEndsAt: string
-}
+import type {
+	BetCancelledPayload,
+	BetCashedOutPayload,
+	BetPlacedPayload,
+	RoundBettingPayload,
+	RoundCrashedPayload,
+	RoundStartedPayload,
+} from '@crash/contracts'
 
-export interface RoundStartedPayload {
-	roundId: string
-	startTime: string
-	growthRate: number
-}
-
-export interface RoundCrashedPayload {
-	roundId: string
-	crashPointHundredths: number
-	serverSeed: string
-	clientSeed: string
-	nonce: number
-}
-
-export interface BetPlacedPayload {
-	roundId: string
-	betId: string
-	userId: string
-	username: string
-	amountCents: string
-}
-
-export interface BetCashedOutPayload {
-	roundId: string
-	betId: string
-	userId: string
-	username: string
-	multiplierHundredths: number
-	payoutCents: string
-}
-
-export interface BetCancelledPayload {
-	roundId: string
-	betId: string
-	userId: string
-	reason: string
+export type {
+	BetCancelledPayload,
+	BetCashedOutPayload,
+	BetPlacedPayload,
+	RoundBettingPayload,
+	RoundCrashedPayload,
+	RoundStartedPayload,
 }
 
 export interface GameBroadcaster {

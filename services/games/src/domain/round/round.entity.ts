@@ -1,3 +1,4 @@
+import { RoundStatus } from '@crash/contracts'
 import {
 	RoundAlreadyCrashedException,
 	RoundNotBettingException,
@@ -7,11 +8,7 @@ import {
 import { defineEntity, type InferEntity } from '@mikro-orm/core'
 import { v7 as uuidv7 } from 'uuid'
 
-export enum RoundStatus {
-	BETTING_PHASE = 'BETTING_PHASE',
-	FLYING = 'FLYING',
-	CRASHED = 'CRASHED',
-}
+export { RoundStatus }
 
 export interface RoundVerification {
 	nonce: number

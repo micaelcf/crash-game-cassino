@@ -1,15 +1,7 @@
+import type { BetDto } from '@crash/contracts'
 import type { Bet } from '@domain/bet/bet.entity'
 
-export interface BetDto {
-	id: string
-	userId: string
-	username: string
-	amountCents: string
-	status: string
-	cashoutMultiplierHundredths: number | null
-	payoutCents: string | null
-	createdAt: string
-}
+export type { BetDto }
 
 export const toBetDto = (bet: Bet): BetDto => ({
 	id: bet.id,

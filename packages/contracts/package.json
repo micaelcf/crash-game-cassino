@@ -1,0 +1,13 @@
+{
+	"name": "@crash/contracts",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./http": "./src/http/index.ts",
+		"./ws": "./src/ws/index.ts",
+		"./status": "./src/status.ts"
+	},
+	"sideEffects": false
+}

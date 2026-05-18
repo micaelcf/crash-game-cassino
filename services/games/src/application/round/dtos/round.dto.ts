@@ -1,21 +1,9 @@
-import { BetDto, toBetDto } from '@application/bet/dtos/bet.dto'
+import { toBetDto } from '@application/bet/dtos/bet.dto'
+import type { RoundDto } from '@crash/contracts'
 import type { Bet } from '@domain/bet/bet.entity'
 import { Round, RoundStatus } from '@domain/round/round.entity'
 
-export interface RoundDto {
-	id: string
-	nonce: number
-	status: RoundStatus
-	hashCommitment: string
-	clientSeed: string
-	bettingEndsAt: string
-	flyingStartedAt: string | null
-	crashedAt: string | null
-	growthRate: number
-	crashPointHundredths: number | null
-	serverSeed: string | null
-	bets: BetDto[]
-}
+export type { RoundDto }
 
 export const toRoundDto = (round: Round, bets: Bet[]): RoundDto => ({
 	id: round.id,
