@@ -4,10 +4,37 @@ services:
   - name: games-service
     url: http://games:4001
     routes:
+      # Catch-all for read endpoints (rounds, leaderboard, etc.) and the
+      # auth-protected POST /games/bets/me read. Bet-write endpoints below
+      # match more specifically and take precedence in Kong's router.
       - name: games-routes
         paths:
           - /games
         strip_path: true
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 120
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
+      # Hot write endpoints: place bet + cash out. Stricter per-IP budget
+      # so a single client can't drown the round in spam.
+      - name: games-bet-write
+        paths:
+          - /games/bet
+          - /games/bet/cashout
+        methods:
+          - POST
+        strip_path: true
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 30
+              hour: 600
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
       # Socket.IO transport. strip_path stays false so the upstream still sees
       # /socket.io/* — that is the path the socket.io server listens on.
       # Kong 3.x auto-handles the WebSocket upgrade for http/https routes.
@@ -26,6 +53,13 @@ services:
         paths:
           - /wallets
         strip_path: true
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 120
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
 
 plugins:
   - name: cors
