@@ -1,12 +1,14 @@
+import mikroOrmConfig from '@infrastructure/db/mikro-orm.config'
+import { InfrastructureModule } from '@infrastructure/infrastructure.module'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
 import { Module, ValidationPipe } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
 import { APP_PIPE } from '@nestjs/core'
-import mikroOrmConfig from './infrastructure/db/mikro-orm.config'
-import { InfrastructureModule } from './infrastructure/infrastructure.module'
 
 @Module({
 	imports: [
-		MikroOrmModule.forRoot({ ...mikroOrmConfig, autoLoadEntities: true }),
+		ConfigModule.forRoot(),
+		MikroOrmModule.forRoot(mikroOrmConfig),
 		InfrastructureModule,
 	],
 	providers: [
