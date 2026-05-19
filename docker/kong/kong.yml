@@ -4,9 +4,9 @@ services:
   - name: games-service
     url: http://games:4001
     routes:
-      # Catch-all for read endpoints (rounds, leaderboard, etc.) and the
-      # auth-protected POST /games/bets/me read. Bet-write endpoints below
-      # match more specifically and take precedence in Kong's router.
+      # Catch-all for /games/* — strips `/games` so the upstream Nest
+      # controllers (which mount at root: /bet, /bet/cashout, /bets/me,
+      # /rounds/*, /leaderboard) match.
       - name: games-routes
         paths:
           - /games
@@ -15,23 +15,6 @@ services:
           - name: rate-limiting
             config:
               minute: 120
-              policy: local
-              fault_tolerant: true
-              hide_client_headers: false
-      # Hot write endpoints: place bet + cash out. Stricter per-IP budget
-      # so a single client can't drown the round in spam.
-      - name: games-bet-write
-        paths:
-          - /games/bet
-          - /games/bet/cashout
-        methods:
-          - POST
-        strip_path: true
-        plugins:
-          - name: rate-limiting
-            config:
-              minute: 30
-              hour: 600
               policy: local
               fault_tolerant: true
               hide_client_headers: false
@@ -49,9 +32,17 @@ services:
   - name: wallets-service
     url: http://wallets:4002
     routes:
+      # Wallets exposes only GET /wallets/me — provisioning is implicit
+      # (auto-ensure on read + on first debit). No public POST surface.
+      # OPTIONS must be allowed so CORS preflight matches this route and the
+      # global CORS plugin can answer it; without it Kong 404s the preflight
+      # and the browser blocks the real GET.
       - name: wallets-routes
         paths:
           - /wallets
+        methods:
+          - GET
+          - OPTIONS
         strip_path: true
         plugins:
           - name: rate-limiting
@@ -67,7 +58,13 @@ plugins:
       origins:
         - http://localhost:3000
         - http://frontend:3000
-
       methods:
         - GET
         - POST
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - Accept
+      credentials: true
+      max_age: 3600
