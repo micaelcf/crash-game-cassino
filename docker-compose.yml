@@ -15,10 +15,16 @@ services:
       - postgres_data:/var/lib/postgresql
       - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
+      # `-h 127.0.0.1` forces a TCP probe so the check only goes green after
+      # the entrypoint has finished running init-databases.sh and reopened the
+      # listener on 5432. Without `-h`, pg_isready hits the Unix socket while
+      # init is still running and Logto starts against a refusing TCP port.
+      test:
+        ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-admin} -d logto"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 15s
 
   # ---------------------------------------------------------------------------
   # RabbitMQ (with management UI)
