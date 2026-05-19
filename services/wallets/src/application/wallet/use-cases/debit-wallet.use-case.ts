@@ -1,4 +1,6 @@
+import { EnsureWalletCommand } from '@application/wallet/dtos/ensure-wallet.command'
 import { DebitWalletCommand } from '@application/wallet/dtos/debit-wallet.command'
+import { EnsureWalletUseCase } from '@application/wallet/use-cases/ensure-wallet.use-case'
 import { InsufficientBalanceException } from '@domain/wallet/insufficient-balance.exception'
 import { Wallet } from '@domain/wallet/wallet.entity'
 import { BaseRepository } from '@infrastructure/db/base.repository'
@@ -17,6 +19,7 @@ export class DebitWalletUseCase {
 		private readonly inboxRepository: BaseRepository<InboxEvent>,
 		private readonly events: EventPublisher,
 		private readonly metrics: WalletMetrics,
+		private readonly ensureWallet: EnsureWalletUseCase,
 	) {}
 
 	async execute(command: DebitWalletCommand): Promise<void> {
@@ -25,22 +28,12 @@ export class DebitWalletUseCase {
 		})
 		if (alreadyProcessed) return
 
-		const wallet = await this.walletRepository.findOne({
-			playerId: command.userId,
-		})
-
-		if (!wallet) {
-			this.inboxRepository.create({ id: command.messageId })
-			this.events.publish('wallet.debit_failed', 'Wallet', command.userId, {
-				userId: command.userId,
-				roundId: command.roundId,
-				betId: command.betId,
-				reason: 'Wallet not found',
-			})
-			await this.walletRepository.flush()
-			this.metrics.recordDebitFailed()
-			return
-		}
+		// Belt-and-suspenders: a player may place their first bet before
+		// ever calling GET /wallets/me. Ensure here so the debit pipeline
+		// never has to deal with a missing wallet.
+		const wallet = await this.ensureWallet.execute(
+			new EnsureWalletCommand(command.userId),
+		)
 
 		try {
 			wallet.debit(command.amount)

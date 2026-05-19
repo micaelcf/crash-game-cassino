@@ -1,6 +1,6 @@
-import { CreateWalletUseCase } from '@application/wallet/use-cases/create-wallet.use-case'
 import { CreditWalletUseCase } from '@application/wallet/use-cases/credit-wallet.use-case'
 import { DebitWalletUseCase } from '@application/wallet/use-cases/debit-wallet.use-case'
+import { EnsureWalletUseCase } from '@application/wallet/use-cases/ensure-wallet.use-case'
 import { GetWalletUseCase } from '@application/wallet/use-cases/get-wallet.use-case'
 import { DomainModule } from '@domain/domain.module'
 import { Wallet } from '@domain/wallet/wallet.entity'
@@ -16,14 +16,14 @@ import { Module } from '@nestjs/common'
 		MikroOrmModule.forFeature([Wallet, InboxEvent, OutboxEvent]),
 	],
 	providers: [
-		CreateWalletUseCase,
+		EnsureWalletUseCase,
 		CreditWalletUseCase,
 		DebitWalletUseCase,
 		GetWalletUseCase,
 		EventPublisher,
 	],
 	exports: [
-		CreateWalletUseCase,
+		EnsureWalletUseCase,
 		CreditWalletUseCase,
 		DebitWalletUseCase,
 		GetWalletUseCase,

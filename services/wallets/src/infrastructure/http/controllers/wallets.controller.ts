@@ -1,14 +1,12 @@
-import { CreateWalletCommand } from '@application/wallet/dtos/create-wallet.command'
 import { GetWalletQuery } from '@application/wallet/dtos/get-wallet.query'
 import { toWalletDto, WalletDto } from '@application/wallet/dtos/wallet.dto'
 import { Wallet } from '@domain/wallet/wallet.entity'
 import type { AuthenticatedRequest } from '@infrastructure/auth/auth-user'
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard'
-import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common'
-import { CommandBus, QueryBus } from '@nestjs/cqrs'
+import { Controller, Get, Req, UseGuards } from '@nestjs/common'
+import { QueryBus } from '@nestjs/cqrs'
 import {
 	ApiBearerAuth,
-	ApiCreatedResponse,
 	ApiOkResponse,
 	ApiOperation,
 	ApiTags,
@@ -19,24 +17,14 @@ import {
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class WalletsController {
-	constructor(
-		private readonly commandBus: CommandBus,
-		private readonly queryBus: QueryBus,
-	) {}
-
-	@Post()
-	@ApiOperation({ summary: 'Create a wallet for the authenticated player.' })
-	@ApiCreatedResponse({ description: 'Wallet created.', type: WalletDto })
-	async createWallet(@Req() req: AuthenticatedRequest): Promise<WalletDto> {
-		const wallet: Wallet = await this.commandBus.execute(
-			new CreateWalletCommand(req.user.sub),
-		)
-		return toWalletDto(wallet)
-	}
+	constructor(private readonly queryBus: QueryBus) {}
 
 	@Get('me')
-	@ApiOperation({ summary: 'Return the authenticated player wallet.' })
-	@ApiOkResponse({ description: 'Wallet found.', type: WalletDto })
+	@ApiOperation({
+		summary:
+			'Return the authenticated player wallet (auto-provisioned on first read).',
+	})
+	@ApiOkResponse({ description: 'Wallet found or freshly created.', type: WalletDto })
 	async getMyWallet(@Req() req: AuthenticatedRequest): Promise<WalletDto> {
 		const wallet: Wallet = await this.queryBus.execute(
 			new GetWalletQuery(req.user.sub),

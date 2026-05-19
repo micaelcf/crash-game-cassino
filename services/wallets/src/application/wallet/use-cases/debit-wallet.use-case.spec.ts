@@ -1,5 +1,7 @@
+import { EnsureWalletCommand } from '@application/wallet/dtos/ensure-wallet.command'
 import { DebitWalletCommand } from '@application/wallet/dtos/debit-wallet.command'
 import { DebitWalletUseCase } from '@application/wallet/use-cases/debit-wallet.use-case'
+import type { EnsureWalletUseCase } from '@application/wallet/use-cases/ensure-wallet.use-case'
 import { Wallet } from '@domain/wallet/wallet.entity'
 import type { BaseRepository } from '@infrastructure/db/base.repository'
 import { InboxEvent } from '@infrastructure/messaging/inbox/inbox-event.entity'
@@ -16,6 +18,8 @@ const newWallet = (playerId: string, balance: bigint): Wallet => {
 	Object.assign(w, { id: crypto.randomUUID(), playerId, balance })
 	return w
 }
+
+const DEFAULT_ENSURED_BALANCE = 100000n
 
 const makeCtx = (
 	opts: { wallet?: Wallet | null; inbox?: InboxEvent | null } = {},
@@ -52,7 +56,21 @@ const makeCtx = (
 		),
 	} as unknown as EventPublisher
 
-	return { walletRepo, inboxRepo, events, inboxCreated, published }
+	const ensureWallet = {
+		execute: vi.fn(async (cmd: EnsureWalletCommand) => {
+			if (opts.wallet) return opts.wallet
+			return newWallet(cmd.playerId, DEFAULT_ENSURED_BALANCE)
+		}),
+	} as unknown as EnsureWalletUseCase
+
+	return {
+		walletRepo,
+		inboxRepo,
+		events,
+		ensureWallet,
+		inboxCreated,
+		published,
+	}
 }
 
 describe('DebitWalletUseCase', () => {
@@ -66,6 +84,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 			new WalletMetrics(new Registry()),
+			ctx.ensureWallet,
 		)
 
 		await useCase.execute(
@@ -96,6 +115,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 			new WalletMetrics(new Registry()),
+			ctx.ensureWallet,
 		)
 
 		await useCase.execute(
@@ -109,22 +129,31 @@ describe('DebitWalletUseCase', () => {
 		})
 	})
 
-	it('publishes wallet.debit_failed when wallet is missing', async () => {
+	it('auto-provisions a wallet when none exists and debits the default balance', async () => {
 		const ctx = makeCtx({ wallet: null })
 		const useCase = new DebitWalletUseCase(
 			ctx.walletRepo as unknown as WalletRepo,
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 			new WalletMetrics(new Registry()),
+			ctx.ensureWallet,
 		)
 
 		await useCase.execute(
-			new DebitWalletCommand('msg-3', 'ghost', 50n, 'round-3', 'bet-3'),
+			new DebitWalletCommand('msg-3', 'newcomer', 250n, 'round-3', 'bet-3'),
 		)
 
+		expect(ctx.ensureWallet.execute).toHaveBeenCalledWith(
+			expect.objectContaining({ playerId: 'newcomer' }),
+		)
 		expect(ctx.published[0]).toMatchObject({
-			eventType: 'wallet.debit_failed',
-			payload: { reason: 'Wallet not found', betId: 'bet-3' },
+			eventType: 'wallet.debited',
+			payload: {
+				userId: 'newcomer',
+				roundId: 'round-3',
+				betId: 'bet-3',
+				amount: '250',
+			},
 		})
 	})
 
@@ -137,6 +166,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 			new WalletMetrics(registry),
+			ctx.ensureWallet,
 		)
 
 		await useCase.execute(
@@ -161,6 +191,7 @@ describe('DebitWalletUseCase', () => {
 			ctx.inboxRepo as unknown as InboxRepo,
 			ctx.events,
 			new WalletMetrics(new Registry()),
+			ctx.ensureWallet,
 		)
 
 		await useCase.execute(
@@ -170,5 +201,6 @@ describe('DebitWalletUseCase', () => {
 		expect(wallet.balance).toBe(1000n)
 		expect(ctx.published).toHaveLength(0)
 		expect(ctx.walletRepo.flush).not.toHaveBeenCalled()
+		expect(ctx.ensureWallet.execute).not.toHaveBeenCalled()
 	})
 })

@@ -1,25 +1,26 @@
-import { CreateWalletCommand } from '@application/wallet/dtos/create-wallet.command'
+import { EnsureWalletCommand } from '@application/wallet/dtos/ensure-wallet.command'
 import { Wallet } from '@domain/wallet/wallet.entity'
 import { BaseRepository } from '@infrastructure/db/base.repository'
 import { InjectRepository } from '@mikro-orm/nestjs'
-import { ConflictException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 
 const DEFAULT_BALANCE_CENTS = 100000n
 
 @Injectable()
-export class CreateWalletUseCase {
+export class EnsureWalletUseCase {
 	constructor(
 		@InjectRepository(Wallet)
 		private readonly walletRepository: BaseRepository<Wallet>,
 	) {}
 
-	async execute(command: CreateWalletCommand): Promise<Wallet> {
+	// Idempotent upsert: returns existing wallet or provisions one with the
+	// default balance. Wallet identity is 1:1 with playerId so there is no
+	// meaningful conflict — first read wins, others reuse.
+	async execute(command: EnsureWalletCommand): Promise<Wallet> {
 		const existing = await this.walletRepository.findOne({
 			playerId: command.playerId,
 		})
-		if (existing) {
-			throw new ConflictException('Wallet already exists for this player')
-		}
+		if (existing) return existing
 
 		const wallet = this.walletRepository.create({
 			playerId: command.playerId,

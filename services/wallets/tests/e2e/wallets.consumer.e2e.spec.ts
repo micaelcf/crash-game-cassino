@@ -88,6 +88,7 @@ describe('Wallets consumer (e2e)', () => {
 					userId: 'player-1',
 					betAmount: '300',
 					roundId: 'round-1',
+					betId: 'bet-1',
 				},
 			)
 
@@ -121,6 +122,7 @@ describe('Wallets consumer (e2e)', () => {
 				userId: 'player-2',
 				betAmount: '500',
 				roundId: 'round-2',
+				betId: 'bet-2',
 			})
 
 			const event = await waitForEvent(
@@ -137,22 +139,33 @@ describe('Wallets consumer (e2e)', () => {
 			expect(wallet?.balance).toBe(100n)
 		})
 
-		it('publishes wallet.debit_failed when the wallet is missing', async () => {
+		it('auto-provisions a wallet for a first-time player and debits the default balance', async () => {
 			await publishEvent(probe.channel, 'crash.events', 'bet.placed', {
-				userId: 'ghost',
-				betAmount: '50',
-				roundId: 'round-3',
+				userId: 'newcomer',
+				betAmount: '250',
+				roundId: 'round-new',
+				betId: 'bet-new',
 			})
 
 			const event = await waitForEvent(
 				probe.channel,
 				PROBE_QUEUE,
 				(m) =>
-					m.routingKey === 'wallet.debit_failed' &&
-					m.payload.userId === 'ghost',
+					m.routingKey === 'wallet.debited' &&
+					m.payload.userId === 'newcomer',
 			)
 
-			expect(event.payload.reason).toBe('Wallet not found')
+			expect(event.payload).toMatchObject({
+				userId: 'newcomer',
+				roundId: 'round-new',
+				amount: '250',
+			})
+
+			const wallet = await pollUntil(
+				() => fetchWallet('newcomer'),
+				(w) => w.balance === 100000n - 250n,
+			)
+			expect(wallet.balance).toBe(99750n)
 		})
 
 		it('is idempotent on duplicate messageId', async () => {
@@ -163,7 +176,12 @@ describe('Wallets consumer (e2e)', () => {
 				probe.channel,
 				'crash.events',
 				'bet.placed',
-				{ userId: 'player-3', betAmount: '300', roundId: 'r-1' },
+				{
+					userId: 'player-3',
+					betAmount: '300',
+					roundId: 'r-1',
+					betId: 'bet-dup',
+				},
 				messageId,
 			)
 
@@ -177,7 +195,12 @@ describe('Wallets consumer (e2e)', () => {
 				probe.channel,
 				'crash.events',
 				'bet.placed',
-				{ userId: 'player-3', betAmount: '300', roundId: 'r-1' },
+				{
+					userId: 'player-3',
+					betAmount: '300',
+					roundId: 'r-1',
+					betId: 'bet-dup',
+				},
 				messageId,
 			)
 
