@@ -27,14 +27,17 @@ RUN bun run build
 FROM base AS runner
 ENV NODE_ENV=production
 # TanStack Start v1 (Vite 8) emits to dist/ — server entry at dist/server/server.js,
-# static client assets at dist/client/. Server bundle keeps deps external, so we
-# ship node_modules alongside it.
+# static client assets at dist/client/. The bundled SSR handler does NOT serve
+# /assets/*, so we use the official Bun production entry from
+# https://github.com/TanStack/router/blob/main/examples/react/start-bun/server.ts
+# (Bun.serve with preload + on-demand static routes, falling back to handler.fetch).
 WORKDIR /app/frontend
 COPY --from=builder /app/frontend/dist ./dist
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/frontend/node_modules ./node_modules
 COPY --from=builder /app/packages/contracts /app/packages/contracts
 COPY --from=builder /app/frontend/package.json ./package.json
+COPY --from=builder /app/frontend/server.ts ./server.ts
 
 EXPOSE 3000
-CMD ["bun", "run", "dist/server/server.js"]
+CMD ["bun", "run", "server.ts"]
