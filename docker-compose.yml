@@ -24,7 +24,7 @@ services:
   # RabbitMQ (with management UI)
   # ---------------------------------------------------------------------------
   rabbitmq:
-    image: rabbitmq:4-management-alpine
+    image: rabbitmq:4-management
     # Run as root so the entrypoint can chown /var/lib/rabbitmq before
     # dropping to the rabbitmq user. Required on rootless podman, where
     # a freshly-created anonymous/named volume is owned by root and the
