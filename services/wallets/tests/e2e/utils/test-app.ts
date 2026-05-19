@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { MikroORM } from '@mikro-orm/core'
-import { ValidationPipe } from '@nestjs/common'
+import { HttpStatus, ValidationPipe } from '@nestjs/common'
 import { Transport } from '@nestjs/microservices'
 import {
 	FastifyAdapter,
@@ -40,7 +40,13 @@ export const bootstrapTestApp = async (
 	const app = moduleRef.createNestApplication<NestFastifyApplication>(
 		new FastifyAdapter(),
 	)
-	app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			transform: true,
+			errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+		}),
+	)
 
 	app.connectMicroservice({
 		transport: Transport.RMQ,

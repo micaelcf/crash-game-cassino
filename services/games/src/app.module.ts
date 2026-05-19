@@ -2,7 +2,7 @@ import mikroOrmConfig from '@infrastructure/db/mikro-orm.config'
 import { InfrastructureModule } from '@infrastructure/infrastructure.module'
 import { ObservabilityModule } from '@infrastructure/observability/observability.module'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
-import { Module, ValidationPipe } from '@nestjs/common'
+import { HttpStatus, Module, ValidationPipe } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_PIPE } from '@nestjs/core'
 
@@ -17,7 +17,11 @@ import { APP_PIPE } from '@nestjs/core'
 		{
 			provide: APP_PIPE,
 			useFactory: () =>
-				new ValidationPipe({ whitelist: true, transform: true }),
+				new ValidationPipe({
+					whitelist: true,
+					transform: true,
+					errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+				}),
 		},
 	],
 })

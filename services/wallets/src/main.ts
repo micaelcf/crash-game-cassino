@@ -7,6 +7,7 @@ import {
 	NestFastifyApplication,
 } from '@nestjs/platform-fastify'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { apiReference } from '@scalar/nestjs-api-reference'
 import { AppModule } from '@/app.module'
 
 async function bootstrap(): Promise<void> {
@@ -16,7 +17,7 @@ async function bootstrap(): Promise<void> {
 	)
 	const port = Number(process.env.PORT ?? 4002)
 
-	await app.get(MikroORM).schema.update({ safe: true })
+	await app.get(MikroORM).migrator.up()
 
 	const swaggerConfig = new DocumentBuilder()
 		.setTitle('Wallets Service')
@@ -25,7 +26,14 @@ async function bootstrap(): Promise<void> {
 		.addBearerAuth()
 		.build()
 	const document = SwaggerModule.createDocument(app, swaggerConfig)
-	SwaggerModule.setup('docs', app, document)
+	app.use(
+		'/docs',
+		apiReference({
+			content: document,
+			withFastify: true,
+			theme: 'saturn',
+		}),
+	)
 
 	app.connectMicroservice<MicroserviceOptions>({
 		transport: Transport.RMQ,

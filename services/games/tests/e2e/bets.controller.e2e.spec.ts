@@ -108,12 +108,12 @@ describe('Bets controller (e2e)', () => {
 				.expect(401)
 		})
 
-		it('rejects non-numeric amount with 400', async () => {
+		it('rejects non-numeric amount with 422', async () => {
 			await request(testApp.app.getHttpServer())
 				.post('/bet')
 				.set('x-mock-user-id', 'u-1')
 				.send({ amount: 'abc' })
-				.expect(400)
+				.expect(422)
 		})
 
 		it('rejects amount below minimum with 400', async () => {

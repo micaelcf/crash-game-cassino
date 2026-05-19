@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { MikroORM } from '@mikro-orm/core'
-import { ValidationPipe } from '@nestjs/common'
+import { HttpStatus, ValidationPipe } from '@nestjs/common'
 import { Transport } from '@nestjs/microservices'
 import {
 	FastifyAdapter,
@@ -50,7 +50,13 @@ export const bootstrapTestApp = async (
 	const app = moduleRef.createNestApplication<NestFastifyApplication>(
 		new FastifyAdapter(),
 	)
-	app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			transform: true,
+			errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+		}),
+	)
 
 	app.connectMicroservice({
 		transport: Transport.RMQ,
@@ -77,5 +83,11 @@ export const bootstrapTestApp = async (
 }
 
 export const closeTestApp = async (handle: TestApp): Promise<void> => {
-	await handle.app.close()
+	// `app.close()` can hang on lingering amqp-connection-manager retry loops
+	// or socket.io adapters in some environments. Race against a short timeout
+	// so vitest's afterAll never blocks for the full hookTimeout — the forked
+	// worker is torn down afterwards regardless.
+	const closing = handle.app.close().catch(() => undefined)
+	const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5_000))
+	await Promise.race([closing, timeout])
 }
