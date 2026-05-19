@@ -47,9 +47,9 @@ const CFG = {
 		name: 'Crash Game API',
 	},
 	demoUser: {
-		username: 'crash',
-		password: 'crash1234',
-		email: 'crash@crash-game.local',
+		username: 'player',
+		password: 'player123',
+		email: 'player@crash-game.local',
 		name: 'Demo Player',
 	},
 	frontendEnvFile: resolve(ROOT, 'frontend/.env'),

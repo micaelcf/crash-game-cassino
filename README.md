@@ -107,9 +107,9 @@ Logto setup needed.
 
 | Field | Value |
 |---|---|
-| Username | `crash` |
-| Password | `crash1234` |
-| Email | `crash@crash-game.local` |
+| Username | `player` |
+| Password | `player123` |
+| Email | `player@crash-game.local` |
 
 > The wallet is **auto-provisioned on first read** with a starting balance the
 > first time the user hits `/wallets/me`, so the demo account always has funds.
@@ -120,7 +120,7 @@ Logto setup needed.
 ## How to play
 
 1. Open <http://localhost:3000> → click **Login**.
-2. You'll be redirected to Logto. Sign in with `crash` / `crash1234`.
+2. You'll be redirected to Logto. Sign in with `player` / `player123`.
 3. Back in the app:
    - The hero shows the **multiplier curve**. The seed commitment hash is
      visible **before** the round starts (provably fair).
