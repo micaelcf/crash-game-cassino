@@ -3,10 +3,10 @@
 	"private": true,
 	"workspaces": ["services/*", "packages/*", "frontend"],
 	"scripts": {
-		"docker:up": "bun scripts/compose.ts up -d postgres postgres-test rabbitmq rabbitmq-test logto kong games wallets prometheus grafana && bun scripts/seed-logto.ts && bun scripts/compose.ts up -d --build frontend",
-		"docker:up:infra": "bun scripts/compose.ts up -d postgres postgres-test rabbitmq rabbitmq-test logto kong games wallets prometheus grafana && bun scripts/seed-logto.ts",
+		"docker:up": "bun scripts/ensure-envs.ts && bun scripts/compose.ts up -d postgres postgres-test rabbitmq rabbitmq-test logto kong games wallets prometheus grafana && bun scripts/seed-logto.ts && bun scripts/compose.ts up -d --build frontend",
+		"docker:up:infra": "bun scripts/ensure-envs.ts && bun scripts/compose.ts up -d postgres postgres-test rabbitmq rabbitmq-test logto kong games wallets prometheus grafana && bun scripts/seed-logto.ts",
 		"docker:down": "bun scripts/compose.ts down",
-		"docker:prune": "bun scripts/compose.ts down -v --rmi all --remove-orphans",
+		"docker:prune": "bun scripts/prune.ts",
 		"seed:logto": "bun scripts/seed-logto.ts",
 		"lint": "biome check .",
 		"format": "biome format --write .",
