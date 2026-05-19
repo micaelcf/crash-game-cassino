@@ -30,20 +30,11 @@ interface QueryRow {
 	biggestMultiplierHundredths: string | number
 }
 
-/**
- * MikroORM v7's QueryBuilder is typed against entity props and rejects
- * aggregate aliases / raw column selects. Cast to a loose shape — runtime
- * API is unchanged, we just bypass the alias type check.
- */
-interface LooseQb {
-	select(fields: string[]): LooseQb
-	where(cond: object): LooseQb
-	groupBy(fields: string[]): LooseQb
-	orderBy(order: Record<string, 'asc' | 'desc'>): LooseQb
-	limit(n: number): LooseQb
-	execute(mode: 'all'): Promise<QueryRow[]>
-}
-
+// MikroORM v7's QueryBuilder cannot express this query cleanly: select-side
+// `.as()` aliases do not propagate to orderBy key resolution (v7 keeps
+// resolving orderBy against entity props, throwing "Trying to query by not
+// existing property"). Raw SQL via the connection is the supported escape
+// hatch — parameterized, dialect-aware, and avoids the criteria machinery.
 @Injectable()
 export class GetLeaderboardUseCase {
 	private readonly cache = new Map<LeaderboardWindow, CacheEntry>()
@@ -62,19 +53,23 @@ export class GetLeaderboardUseCase {
 		}
 
 		const windowStart = new Date(now.getTime() - WINDOW_MS[query.window])
-		const qb = this.bets.createQueryBuilder('b') as unknown as LooseQb
-		qb.select([
-			'b.user_id as "userId"',
-			'b.username as "username"',
-			'SUM(b.payout_cents - b.amount_cents) as "winningsCents"',
-			'COUNT(*) as "betsCount"',
-			'MAX(b.cashout_multiplier_hundredths) as "biggestMultiplierHundredths"',
-		])
-		qb.where({ status: BetStatus.WON, createdAt: { $gt: windowStart } })
-		qb.groupBy(['b.user_id', 'b.username'])
-		qb.orderBy({ winningsCents: 'desc' })
-		qb.limit(query.limit)
-		const rows = await qb.execute('all')
+		const sql = `
+			SELECT
+				user_id AS "userId",
+				username AS "username",
+				SUM(payout_cents - amount_cents)::text AS "winningsCents",
+				COUNT(*)::int AS "betsCount",
+				MAX(cashout_multiplier_hundredths)::int AS "biggestMultiplierHundredths"
+			FROM bets
+			WHERE status = ? AND created_at > ?
+			GROUP BY user_id, username
+			ORDER BY "winningsCents" DESC
+			LIMIT ?
+		`
+		const rows = await this.bets
+			.getEntityManager()
+			.getConnection()
+			.execute<QueryRow[]>(sql, [BetStatus.WON, windowStart, query.limit])
 
 		const response: LeaderboardResponse = {
 			window: query.window,

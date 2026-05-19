@@ -10,33 +10,22 @@ type BetRepo = BaseRepository<Bet>
 
 const clockAt = (iso: string): Clock => ({ now: () => new Date(iso) })
 
-const makeQbMock = (rows: unknown[]) => {
-	const calls: Array<{
-		method: string
-		args: unknown[]
-	}> = []
-	const qb: Record<string, unknown> = {}
-	const chain = (method: string) =>
-		vi.fn((...args: unknown[]) => {
-			calls.push({ method, args })
-			return qb
-		})
-	qb.select = chain('select')
-	qb.where = chain('where')
-	qb.groupBy = chain('groupBy')
-	qb.orderBy = chain('orderBy')
-	qb.limit = chain('limit')
-	qb.execute = vi.fn(async () => rows)
-	return { qb, calls }
+interface ExecuteCall {
+	sql: string
+	params: unknown[]
 }
 
 const makeRepo = (rows: unknown[]) => {
-	const { qb, calls } = makeQbMock(rows)
+	const calls: ExecuteCall[] = []
+	const execute = vi.fn(async (sql: string, params: unknown[]) => {
+		calls.push({ sql, params })
+		return rows
+	})
+	const connection = { execute }
+	const em = { getConnection: () => connection }
 	return {
-		repo: {
-			createQueryBuilder: vi.fn(() => qb),
-		} as unknown as BetRepo,
-		qb,
+		repo: { getEntityManager: () => em } as unknown as BetRepo,
+		execute,
 		calls,
 	}
 }
@@ -45,7 +34,7 @@ describe('GetLeaderboardUseCase', () => {
 	beforeEach(() => vi.clearAllMocks())
 
 	it('queries WON bets within the 24h window and orders by winnings desc', async () => {
-		const { repo, calls, qb } = makeRepo([
+		const { repo, calls, execute } = makeRepo([
 			{
 				userId: 'u-1',
 				username: 'alice',
@@ -63,21 +52,15 @@ describe('GetLeaderboardUseCase', () => {
 			new GetLeaderboardQuery(LeaderboardWindow.TWENTY_FOUR_HOURS, 10),
 		)
 
-		expect(qb.execute).toHaveBeenCalledWith('all')
-		const where = calls.find((c) => c.method === 'where')
-		expect(where).toBeDefined()
-		const whereArgs = where?.args[0] as {
-			status: BetStatus
-			createdAt: { $gt: Date }
-		}
-		expect(whereArgs.status).toBe(BetStatus.WON)
-		expect(whereArgs.createdAt.$gt.toISOString()).toBe(
-			'2026-05-17T12:00:00.000Z',
-		)
-		const order = calls.find((c) => c.method === 'orderBy')
-		expect(order?.args[0]).toEqual({ winningsCents: 'desc' })
-		const limit = calls.find((c) => c.method === 'limit')
-		expect(limit?.args[0]).toBe(10)
+		expect(execute).toHaveBeenCalledOnce()
+		const { sql, params } = calls[0]
+		expect(sql).toMatch(/from bets/i)
+		expect(sql).toMatch(/group by user_id, username/i)
+		expect(sql).toMatch(/order by "winningscents" desc/i)
+		expect(sql).toMatch(/limit \?/i)
+		expect(params[0]).toBe(BetStatus.WON)
+		expect((params[1] as Date).toISOString()).toBe('2026-05-17T12:00:00.000Z')
+		expect(params[2]).toBe(10)
 
 		expect(result.window).toBe(LeaderboardWindow.TWENTY_FOUR_HOURS)
 		expect(result.entries).toHaveLength(1)
@@ -100,9 +83,7 @@ describe('GetLeaderboardUseCase', () => {
 
 		await useCase.execute(new GetLeaderboardQuery(LeaderboardWindow.SEVEN_DAYS))
 
-		const where = calls.find((c) => c.method === 'where')
-		const whereArgs = where?.args[0] as { createdAt: { $gt: Date } }
-		expect(whereArgs.createdAt.$gt.toISOString()).toBe(
+		expect((calls[0].params[1] as Date).toISOString()).toBe(
 			'2026-05-11T12:00:00.000Z',
 		)
 	})
@@ -118,8 +99,7 @@ describe('GetLeaderboardUseCase', () => {
 			new GetLeaderboardQuery(LeaderboardWindow.TWENTY_FOUR_HOURS),
 		)
 
-		const limit = calls.find((c) => c.method === 'limit')
-		expect(limit?.args[0]).toBe(20)
+		expect(calls[0].params[2]).toBe(20)
 	})
 
 	it('serialises bigint winnings as decimal strings', async () => {
@@ -145,7 +125,7 @@ describe('GetLeaderboardUseCase', () => {
 	})
 
 	it('caches results per window for 30 seconds', async () => {
-		const { repo } = makeRepo([
+		const { repo, execute } = makeRepo([
 			{
 				userId: 'u-1',
 				username: 'alice',
@@ -164,12 +144,12 @@ describe('GetLeaderboardUseCase', () => {
 		await useCase.execute(
 			new GetLeaderboardQuery(LeaderboardWindow.TWENTY_FOUR_HOURS),
 		)
-		expect(repo.createQueryBuilder).toHaveBeenCalledTimes(1)
+		expect(execute).toHaveBeenCalledTimes(1)
 
 		nowMs += 31_000
 		await useCase.execute(
 			new GetLeaderboardQuery(LeaderboardWindow.TWENTY_FOUR_HOURS),
 		)
-		expect(repo.createQueryBuilder).toHaveBeenCalledTimes(2)
+		expect(execute).toHaveBeenCalledTimes(2)
 	})
 })
