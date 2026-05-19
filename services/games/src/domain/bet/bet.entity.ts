@@ -42,6 +42,10 @@ export const BetSchema = defineEntity({
 			name: 'bets_status_created_at_idx',
 			properties: ['status', 'createdAt'],
 		},
+		{
+			name: 'bets_user_id_created_at_idx',
+			properties: ['userId', 'createdAt'],
+		},
 	],
 })
 

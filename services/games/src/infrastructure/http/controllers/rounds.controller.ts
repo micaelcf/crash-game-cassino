@@ -2,6 +2,7 @@ import { GetCurrentRoundQuery } from '@application/round/dtos/get-current-round.
 import { GetRoundHistoryQuery } from '@application/round/dtos/get-round-history.query'
 import { GetRoundVerifyQuery } from '@application/round/dtos/get-round-verify.query'
 import { RoundNotCrashedException } from '@domain/round/round.exceptions'
+import { ApiPagedOkResponse } from '@infrastructure/http/dtos/paged-response.openapi'
 import { PaginationDto } from '@infrastructure/http/dtos/pagination.dto'
 import {
 	BadRequestException,
@@ -24,15 +25,66 @@ export class RoundsController {
 	constructor(private readonly queryBus: QueryBus) {}
 
 	@Get('current')
-	@ApiOperation({ summary: 'Return the current round and its placed bets.' })
-	@ApiOkResponse({ description: 'Current round snapshot.' })
+	@ApiOperation({
+		summary:
+			'Return the round currently open for bets or in flight, or null between rounds.',
+	})
+	@ApiOkResponse({
+		description:
+			'Active round snapshot, or null when no round is in BETTING_PHASE/FLYING.',
+		schema: {
+			oneOf: [
+				{ type: 'null' },
+				{
+					type: 'object',
+					required: [
+						'id',
+						'nonce',
+						'status',
+						'hashCommitment',
+						'clientSeed',
+						'bettingEndsAt',
+						'flyingStartedAt',
+						'crashedAt',
+						'growthRate',
+						'crashPointHundredths',
+						'serverSeed',
+						'bets',
+						'serverTime',
+					],
+					properties: {
+						id: { type: 'string', format: 'uuid' },
+						nonce: { type: 'integer' },
+						status: {
+							type: 'string',
+							enum: ['BETTING_PHASE', 'FLYING'],
+						},
+						hashCommitment: { type: 'string' },
+						clientSeed: { type: 'string' },
+						bettingEndsAt: { type: 'string', format: 'date-time' },
+						flyingStartedAt: {
+							type: 'string',
+							format: 'date-time',
+							nullable: true,
+						},
+						crashedAt: { type: 'null' },
+						growthRate: { type: 'number' },
+						crashPointHundredths: { type: 'null' },
+						serverSeed: { type: 'null' },
+						bets: { type: 'array', items: { type: 'object' } },
+						serverTime: { type: 'string', format: 'date-time' },
+					},
+				},
+			],
+		},
+	})
 	async currentRound() {
 		return this.queryBus.execute(new GetCurrentRoundQuery())
 	}
 
 	@Get('history')
 	@ApiOperation({ summary: 'Paginated history of crashed rounds.' })
-	@ApiOkResponse({ description: 'Paginated round history.' })
+	@ApiPagedOkResponse('Paginated round history.')
 	async roundHistory(@Query() page: PaginationDto) {
 		return this.queryBus.execute(
 			new GetRoundHistoryQuery(page.page, page.pageSize),

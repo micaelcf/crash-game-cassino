@@ -14,6 +14,12 @@ export interface RoundDto {
 	crashPointHundredths: number | null
 	serverSeed: string | null
 	bets: BetDto[]
+	/**
+	 * ISO-8601 timestamp captured when the server generated this payload.
+	 * Frontend computes one-sided clock skew (`serverTime - Date.now()`) to
+	 * keep multiplier projections aligned across slow/skewed clients.
+	 */
+	serverTime: string
 }
 
 export interface RoundVerifyDto {

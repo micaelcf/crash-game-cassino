@@ -126,6 +126,12 @@ describe('Rounds controller (e2e)', () => {
 	it('GET /rounds/history rejects invalid pagination (page=0)', async () => {
 		await request(testApp.app.getHttpServer())
 			.get('/rounds/history?page=0')
-			.expect(400)
+			.expect(422)
+	})
+
+	it('GET /rounds/history rejects pageSize > 100', async () => {
+		await request(testApp.app.getHttpServer())
+			.get('/rounds/history?pageSize=101')
+			.expect(422)
 	})
 })

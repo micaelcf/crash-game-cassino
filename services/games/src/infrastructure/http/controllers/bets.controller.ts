@@ -14,6 +14,7 @@ import {
 } from '@domain/round/round.exceptions'
 import type { AuthenticatedRequest } from '@infrastructure/auth/auth-user'
 import { JwtAuthGuard } from '@infrastructure/auth/jwt-auth.guard'
+import { ApiPagedOkResponse } from '@infrastructure/http/dtos/paged-response.openapi'
 import { PaginationDto } from '@infrastructure/http/dtos/pagination.dto'
 import { PlaceBetDto } from '@infrastructure/http/dtos/place-bet.dto'
 import {
@@ -49,7 +50,7 @@ export class BetsController {
 
 	@Get('bets/me')
 	@ApiOperation({ summary: 'List bets placed by the authenticated player.' })
-	@ApiOkResponse({ description: 'Paginated list of the player bets.' })
+	@ApiPagedOkResponse('Paginated list of the player bets.')
 	async myBets(@Req() req: AuthenticatedRequest, @Query() page: PaginationDto) {
 		return this.queryBus.execute(
 			new GetMyBetsQuery(req.user.sub, page.page, page.pageSize),

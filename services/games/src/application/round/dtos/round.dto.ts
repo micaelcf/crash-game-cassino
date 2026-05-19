@@ -5,7 +5,11 @@ import { Round, RoundStatus } from '@domain/round/round.entity'
 
 export type { RoundDto }
 
-export const toRoundDto = (round: Round, bets: Bet[]): RoundDto => ({
+export const toRoundDto = (
+	round: Round,
+	bets: Bet[],
+	serverTime: Date,
+): RoundDto => ({
 	id: round.id,
 	nonce: round.nonce,
 	status: round.status,
@@ -20,4 +24,5 @@ export const toRoundDto = (round: Round, bets: Bet[]): RoundDto => ({
 	serverSeed:
 		round.status === RoundStatus.CRASHED ? (round.serverSeed ?? null) : null,
 	bets: bets.map(toBetDto),
+	serverTime: serverTime.toISOString(),
 })

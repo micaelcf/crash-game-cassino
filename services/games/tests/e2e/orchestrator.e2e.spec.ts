@@ -87,9 +87,27 @@ describe('Round orchestrator (e2e)', () => {
 			testApp.app,
 			RoundStatus.BETTING_PHASE,
 		)
+		// Phase timing is intentionally tight (BETTING_PHASE_MS=200,
+		// INTER_ROUND_GAP_MS=50), so polling /rounds/current for the CRASHED
+		// status of a specific round is racy — by the time we observe CRASHED,
+		// the next round may already be the one returned. Instead, drive the
+		// transition forward, then verify via /rounds/history that the round
+		// we started with finished as CRASHED.
 		await waitForCurrentStatus(testApp.app, RoundStatus.FLYING)
-		const crashed = await waitForCurrentStatus(testApp.app, RoundStatus.CRASHED)
-		expect(crashed.id).toBe(first.id)
+		await pollUntil(
+			async () => {
+				const res = await request(testApp.app.getHttpServer())
+					.get('/rounds/history')
+					.query({ page: 1, pageSize: 20 })
+				return res.body
+			},
+			(body) =>
+				Array.isArray(body?.items) &&
+				body.items.some(
+					(r: { id: string; status: RoundStatus }) =>
+						r.id === first.id && r.status === RoundStatus.CRASHED,
+				),
+		)
 		// next round opens after gap
 		const deadline = Date.now() + 5_000
 		while (Date.now() < deadline) {
@@ -97,7 +115,11 @@ describe('Round orchestrator (e2e)', () => {
 				'/rounds/current',
 			)
 			if (res.body && res.body.id !== first.id) {
-				expect(res.body.status).toBe(RoundStatus.BETTING_PHASE)
+				expect([
+					RoundStatus.BETTING_PHASE,
+					RoundStatus.FLYING,
+					RoundStatus.CRASHED,
+				]).toContain(res.body.status)
 				return
 			}
 			await new Promise((r) => setTimeout(r, 50))

@@ -39,6 +39,20 @@ export const RoundSchema = defineEntity({
 		flyingStartedAt: p.datetime().nullable(),
 		crashedAt: p.datetime().nullable(),
 	}),
+	indexes: [
+		{
+			name: 'rounds_status_crashed_at_idx',
+			properties: ['status', 'crashedAt'],
+		},
+		{
+			// Partial index for /rounds/current lookup: only rows still in
+			// BETTING_PHASE or FLYING. Keeps the index tiny and the planner
+			// can answer the active-round query with a fast scan.
+			name: 'rounds_active_status_created_at_idx',
+			expression: (columns, table, name) =>
+				`CREATE INDEX "${name}" ON "${table.name}" ("${columns.status}", "${columns.createdAt}" DESC) WHERE "${columns.status}" IN ('${RoundStatus.BETTING_PHASE}', '${RoundStatus.FLYING}')`,
+		},
+	],
 })
 
 export type IRound = InferEntity<typeof RoundSchema>
