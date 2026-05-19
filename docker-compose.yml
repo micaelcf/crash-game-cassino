@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
-      POSTGRES_EXTRA_DATABASES: games,wallets,logto
+      POSTGRES_EXTRA_DATABASES: games,wallets,logto,games_test,wallets_test
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
@@ -21,32 +21,10 @@ services:
       retries: 10
 
   # ---------------------------------------------------------------------------
-  # PostgreSQL 18 — test instance (dedicated infra for e2e/integration tests)
-  # ---------------------------------------------------------------------------
-  postgres-test:
-    image: postgres:18-alpine
-    profiles: ["test"]
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: postgres
-      POSTGRES_EXTRA_DATABASES: games_test,wallets_test
-    volumes:
-      - postgres_test_data:/var/lib/postgresql
-      - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # ---------------------------------------------------------------------------
   # RabbitMQ (with management UI)
   # ---------------------------------------------------------------------------
   rabbitmq:
-    image: rabbitmq:4-management
+    image: rabbitmq:4-management-alpine
     # Run as root so the entrypoint can chown /var/lib/rabbitmq before
     # dropping to the rabbitmq user. Required on rootless podman, where
     # a freshly-created anonymous/named volume is owned by root and the
@@ -61,29 +39,6 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-admin}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-
-  # ---------------------------------------------------------------------------
-  # RabbitMQ — test instance (dedicated broker for e2e/integration tests)
-  # ---------------------------------------------------------------------------
-  rabbitmq-test:
-    image: rabbitmq:4-management-alpine
-    user: "0:0"
-    restart: on-failure
-    profiles: ["test"]
-    ports:
-      - "5673:5672"
-      - "15673:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    volumes:
-      - rabbitmq_test_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -238,8 +193,6 @@ services:
 
 volumes:
   postgres_data:
-  postgres_test_data:
   rabbitmq_data:
-  rabbitmq_test_data:
   prometheus_data:
   grafana_data:

@@ -16,13 +16,13 @@ export interface PgHandle {
 const DEFAULT_PG_URL =
 	process.env.TEST_DATABASE_URL_GAMES ||
 	process.env.TEST_DATABASE_URL ||
-	'postgresql://admin:admin@127.0.0.1:5433/games_test'
+	'postgresql://admin:admin@127.0.0.1:5432/games_test'
 
 const DEFAULT_RABBIT_USER = process.env.TEST_RABBITMQ_USER || 'admin'
 const DEFAULT_RABBIT_PASS = process.env.TEST_RABBITMQ_PASSWORD || 'admin'
 const DEFAULT_RABBIT_HOST = process.env.TEST_RABBITMQ_HOST || '127.0.0.1'
-const DEFAULT_RABBIT_AMQP_PORT = process.env.TEST_RABBITMQ_AMQP_PORT || '5673'
-const DEFAULT_RABBIT_MGMT_PORT = process.env.TEST_RABBITMQ_MGMT_PORT || '15673'
+const DEFAULT_RABBIT_AMQP_PORT = process.env.TEST_RABBITMQ_AMQP_PORT || '5672'
+const DEFAULT_RABBIT_MGMT_PORT = process.env.TEST_RABBITMQ_MGMT_PORT || '15672'
 const DEFAULT_RABBIT_URL =
 	process.env.TEST_RABBITMQ_URL ||
 	`amqp://${DEFAULT_RABBIT_USER}:${DEFAULT_RABBIT_PASS}@${DEFAULT_RABBIT_HOST}:${DEFAULT_RABBIT_AMQP_PORT}`
