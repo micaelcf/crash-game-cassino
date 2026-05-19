@@ -14,7 +14,11 @@ export function useApiClient(): ApiClient {
 					if (!isAuthenticated) return undefined;
 					try {
 						return await getAccessToken(env.VITE_LOGTO_RESOURCE);
-					} catch {
+					} catch (err) {
+						// Surface Logto's reason — silently swallowing this masks
+						// "resource not in token / session expired / JWKS unreachable"
+						// failures as opaque 401s downstream.
+						console.error("[api-client] getAccessToken failed:", err);
 						return undefined;
 					}
 				},

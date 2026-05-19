@@ -11,10 +11,9 @@ export function AppShell({ header, children, className }: AppShellProps) {
 	return (
 		<main
 			className={cn(
-				"flex min-h-[100dvh] flex-col text-(--color-fg)",
+				"flex min-h-[100dvh] flex-col overflow-x-hidden text-fg",
 				className,
-			)}
-		>
+			)}>
 			{header}
 			{children}
 		</main>

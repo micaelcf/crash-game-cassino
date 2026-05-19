@@ -27,8 +27,7 @@ export function BetForm({ disabled }: { disabled?: boolean }) {
 			<Field
 				label="Amount (1.00 – 1000.00)"
 				hint="Decimal in major units; converted to integer cents on submit."
-				error={parseError ?? serverError?.message}
-			>
+				error={parseError ?? serverError?.message}>
 				{({ id }) => (
 					<input
 						id={id}
@@ -44,8 +43,7 @@ export function BetForm({ disabled }: { disabled?: boolean }) {
 			<button
 				type="submit"
 				disabled={disabled || mutation.isPending}
-				className="rounded-md bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-slate-950 disabled:bg-slate-700 disabled:text-slate-400"
-			>
+				className="rounded-md bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
 				{mutation.isPending ? "Placing…" : "Place bet"}
 			</button>
 		</form>

@@ -22,11 +22,10 @@ export function Tooltip({
 				<BaseTooltip.Positioner sideOffset={6} side={side}>
 					<BaseTooltip.Popup
 						className={cn(
-							"rounded-(--radius-control) border border-(--color-border) bg-(--color-bg-2) px-2 py-1 text-xs text-(--color-fg)",
+							"rounded-control border border-border bg-bg-2 px-2 py-1 text-xs text-fg",
 							"origin-(--transform-origin) transition-[transform,scale,opacity] duration-150",
 							"data-starting-style:scale-90 data-starting-style:opacity-0 data-ending-style:scale-90 data-ending-style:opacity-0",
-						)}
-					>
+						)}>
 						{label}
 					</BaseTooltip.Popup>
 				</BaseTooltip.Positioner>

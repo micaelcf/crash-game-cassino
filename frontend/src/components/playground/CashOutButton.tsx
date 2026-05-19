@@ -11,8 +11,7 @@ export function CashOutButton({ disabled }: { disabled: boolean }) {
 				type="button"
 				onClick={() => mutation.mutate()}
 				disabled={disabled || mutation.isPending}
-				className="rounded-md bg-amber-400 px-3 py-1.5 text-sm font-semibold text-slate-950 disabled:bg-slate-700 disabled:text-slate-400"
-			>
+				className="rounded-md bg-amber-400 px-3 py-1.5 text-sm font-semibold text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
 				{mutation.isPending ? "Cashing out…" : "Cash out"}
 			</button>
 			{error ? <p className="text-rose-400 text-xs">{error.message}</p> : null}

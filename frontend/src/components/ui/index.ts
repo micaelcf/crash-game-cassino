@@ -1,6 +1,12 @@
 export type { ButtonSize, ButtonVariant } from "./button";
 export { Button } from "./button";
+export type { DataTablePagination, DataTableProps } from "./data-table";
+export { DataTable } from "./data-table";
+export type { DrawerProps } from "./drawer";
+export { Drawer } from "./drawer";
 export { NumberField } from "./number-field";
+export type { ScrollAreaProps } from "./scroll-area";
+export { ScrollArea } from "./scroll-area";
 export { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from "./tabs";
 export type { ToastTone } from "./toast";
 export { ToastProvider, useToast } from "./toast";

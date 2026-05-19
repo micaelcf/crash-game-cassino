@@ -13,21 +13,16 @@ export function LeaderboardMini() {
 	const entries = query.data?.entries ?? [];
 
 	return (
-		<section className="flex flex-col gap-3 rounded-(--radius-card) bg-(--color-bg-1) p-4 ring-1 ring-inset ring-(--color-border)/70 shadow-(--shadow-card)">
+		<section className="flex flex-col gap-3 rounded-(--radius-card) bg-bg-1 p-4 ring-1 ring-inset ring-border/70 shadow-(--shadow-card)">
 			<header className="flex items-center justify-between">
-				<h2 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-(--color-fg-muted)">
-					<TrophyIcon
-						size={14}
-						weight="duotone"
-						className="text-(--color-primary)"
-					/>
+				<h2 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-fg-muted">
+					<TrophyIcon size={14} weight="duotone" className="text-primary" />
 					Top 24h
 				</h2>
 				<Link
 					to="/leaderboard"
 					search={{ window: LeaderboardWindow.TWENTY_FOUR_HOURS }}
-					className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-(--color-fg-muted) transition-colors hover:text-(--color-primary)"
-				>
+					className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-fg-muted transition-colors hover:text-primary">
 					See all
 					<ArrowRightIcon size={10} weight="bold" />
 				</Link>
@@ -38,14 +33,14 @@ export function LeaderboardMini() {
 					{Array.from({ length: 5 }, (_, i) => `mini-skel-${i}`).map((id) => (
 						<li
 							key={id}
-							className="h-9 animate-pulse rounded-(--radius-control) bg-(--color-bg-2)/60"
+							className="h-9 animate-pulse rounded-control bg-bg-2/60"
 						/>
 					))}
 				</ul>
 			)}
 
 			{query.data && entries.length === 0 && (
-				<p className="py-6 text-center text-xs text-(--color-fg-dim)">
+				<p className="py-6 text-center text-xs text-fg-dim">
 					No champions yet today.
 				</p>
 			)}
@@ -69,32 +64,31 @@ export function LeaderboardMini() {
 								}}
 								className={
 									isMe
-										? "flex items-center justify-between rounded-(--radius-control) bg-(--color-primary)/15 px-2.5 py-1.5 text-xs ring-1 ring-inset ring-(--color-primary)/40"
-										: "flex items-center justify-between rounded-(--radius-control) bg-(--color-bg-2)/60 px-2.5 py-1.5 text-xs"
-								}
-							>
+										? "flex items-center justify-between rounded-control bg-primary/15 px-2.5 py-1.5 text-xs ring-1 ring-inset ring-primary/40"
+										: "flex items-center justify-between rounded-control bg-bg-2/60 px-2.5 py-1.5 text-xs"
+								}>
 								<span className="flex min-w-0 items-center gap-2">
 									{rank === 1 ? (
 										<CrownIcon
 											size={11}
 											weight="fill"
-											className="shrink-0 text-(--color-primary)"
+											className="shrink-0 text-primary"
 										/>
 									) : (
-										<span className="w-3 shrink-0 font-mono text-[10px] font-bold text-(--color-fg-dim)">
+										<span className="w-3 shrink-0 font-mono text-[10px] font-bold text-fg-dim">
 											{rank}
 										</span>
 									)}
-									<span className="truncate font-semibold text-(--color-fg)">
+									<span className="truncate font-semibold text-fg">
 										{e.username}
 									</span>
 									{isMe && (
-										<span className="rounded-(--radius-pill) bg-(--color-primary)/20 px-1 text-[8px] font-black uppercase tracking-widest text-(--color-primary)">
+										<span className="rounded-pill bg-primary/20 px-1 text-[8px] font-black uppercase tracking-widest text-primary">
 											you
 										</span>
 									)}
 								</span>
-								<span className="font-mono text-xs font-bold tabular-nums text-(--color-secondary)">
+								<span className="font-mono text-xs font-bold tabular-nums text-secondary">
 									+{formatCents(Cents(BigInt(e.winningsCents)))}
 								</span>
 							</motion.li>

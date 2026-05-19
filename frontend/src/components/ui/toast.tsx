@@ -6,7 +6,7 @@ const TONE_BAR: Record<string, string> = {
 	info: "bg-(--color-neon-cyan)",
 	success: "bg-(--color-neon-green)",
 	warning: "bg-(--color-neon-amber)",
-	error: "bg-(--color-danger)",
+	error: "bg-danger",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -31,27 +31,25 @@ function ToastList() {
 				key={toast.id}
 				toast={toast}
 				className={cn(
-					"absolute top-0 right-0 z-[calc(1000-var(--toast-index))] mr-0 w-full origin-top rounded-(--radius-card) border border-(--color-border) bg-(--color-bg-1) p-4 shadow-2xl select-none",
+					"absolute top-0 right-0 z-[calc(1000-var(--toast-index))] mr-0 w-full origin-top rounded-(--radius-card) border border-border bg-bg-1 p-4 shadow-2xl select-none",
 					"[--gap:0.6rem] [--scale:calc(max(0,1-(var(--toast-index)*0.1)))] [--shrink:calc(1-var(--scale))] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*+1+calc(var(--toast-index)*var(--gap)*+1)+var(--toast-swipe-movement-y))]",
 					"[transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--toast-swipe-movement-y)+(var(--toast-index)*var(--gap))-(var(--shrink)*var(--height))))_scale(var(--scale))]",
 					"data-[expanded]:[transform:translateX(var(--toast-swipe-movement-x))_translateY(calc(var(--offset-y)))]",
 					"data-[starting-style]:[transform:translateY(-150%)] data-[ending-style]:opacity-0",
 					"h-[var(--height)] data-[expanded]:h-[var(--toast-height)]",
 					"[transition:transform_0.5s_cubic-bezier(0.22,1,0.36,1),opacity_0.4s,height_0.18s]",
-				)}
-			>
+				)}>
 				<div className="flex items-start gap-3">
 					<span
 						className={cn("mt-1 size-2 shrink-0 rounded-full", TONE_BAR[tone])}
 					/>
 					<div className="min-w-0 flex-1">
-						<Toast.Title className="text-sm font-semibold text-(--color-fg)" />
-						<Toast.Description className="mt-0.5 text-xs leading-snug text-(--color-fg-muted)" />
+						<Toast.Title className="text-sm font-semibold text-fg" />
+						<Toast.Description className="mt-0.5 text-xs leading-snug text-fg-muted" />
 					</div>
 					<Toast.Close
 						aria-label="Close"
-						className="flex size-5 items-center justify-center rounded-sm text-(--color-fg-dim) hover:bg-(--color-bg-2) hover:text-(--color-fg)"
-					>
+						className="flex size-5 items-center justify-center rounded-sm text-fg-dim hover:bg-bg-2 hover:text-fg">
 						<svg
 							viewBox="0 0 24 24"
 							className="size-3"
@@ -60,8 +58,7 @@ function ToastList() {
 							strokeWidth="2.5"
 							strokeLinecap="round"
 							role="img"
-							aria-label="Close icon"
-						>
+							aria-label="Close icon">
 							<title>Close</title>
 							<path d="M18 6 6 18" />
 							<path d="m6 6 12 12" />

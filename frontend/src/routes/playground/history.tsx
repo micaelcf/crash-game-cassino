@@ -26,8 +26,7 @@ function HistorySection() {
 						pageSize={rounds.data?.pageSize ?? 10}
 						onChange={setRoundsPage}
 					/>
-				}
-			>
+				}>
 				<JsonView value={rounds.data ?? null} />
 			</Section>
 
@@ -40,8 +39,7 @@ function HistorySection() {
 						pageSize={bets.data?.pageSize ?? 10}
 						onChange={setBetsPage}
 					/>
-				}
-			>
+				}>
 				<JsonView value={bets.data ?? null} />
 			</Section>
 		</div>
@@ -66,8 +64,7 @@ function Pager({
 				type="button"
 				onClick={() => onChange(Math.max(1, page - 1))}
 				disabled={page <= 1}
-				className="rounded border border-slate-700 px-2 py-1 disabled:opacity-50"
-			>
+				className="rounded border border-slate-700 px-2 py-1 disabled:opacity-50">
 				Prev
 			</button>
 			<span className="px-2 text-slate-400">
@@ -77,8 +74,7 @@ function Pager({
 				type="button"
 				onClick={() => onChange(Math.min(maxPage, page + 1))}
 				disabled={page >= maxPage}
-				className="rounded border border-slate-700 px-2 py-1 disabled:opacity-50"
-			>
+				className="rounded border border-slate-700 px-2 py-1 disabled:opacity-50">
 				Next
 			</button>
 		</div>

@@ -15,27 +15,27 @@ export function toneForHundredths(h: number): Tone {
 }
 
 export const TONE_TEXT: Record<Tone, string> = {
-	danger: "text-(--color-danger)",
-	cyan: "text-(--color-accent-cyan)",
-	orange: "text-(--color-primary)",
-	green: "text-(--color-secondary)",
-	pink: "text-(--color-accent-pink)",
+	danger: "text-danger",
+	cyan: "text-accent-cyan",
+	orange: "text-primary",
+	green: "text-secondary",
+	pink: "text-accent-pink",
 };
 
 export const TONE_BG_SOFT: Record<Tone, string> = {
-	danger: "bg-(--color-danger)/15",
-	cyan: "bg-(--color-accent-cyan)/15",
-	orange: "bg-(--color-primary)/15",
-	green: "bg-(--color-secondary)/15",
-	pink: "bg-(--color-accent-pink)/15",
+	danger: "bg-danger/15",
+	cyan: "bg-accent-cyan/15",
+	orange: "bg-primary/15",
+	green: "bg-secondary/15",
+	pink: "bg-accent-pink/15",
 };
 
 export const TONE_RING: Record<Tone, string> = {
-	danger: "ring-1 ring-inset ring-(--color-danger)/40",
-	cyan: "ring-1 ring-inset ring-(--color-accent-cyan)/40",
-	orange: "ring-1 ring-inset ring-(--color-primary)/40",
-	green: "ring-1 ring-inset ring-(--color-secondary)/40",
-	pink: "ring-1 ring-inset ring-(--color-accent-pink)/40",
+	danger: "ring-1 ring-inset ring-danger/40",
+	cyan: "ring-1 ring-inset ring-accent-cyan/40",
+	orange: "ring-1 ring-inset ring-primary/40",
+	green: "ring-1 ring-inset ring-secondary/40",
+	pink: "ring-1 ring-inset ring-accent-pink/40",
 };
 
 export const TONE_VAR: Record<Tone, string> = {

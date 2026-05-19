@@ -58,16 +58,14 @@ function VerifySection() {
 						type="button"
 						onClick={() => setSubmittedId(draft.trim() || undefined)}
 						disabled={!draft.trim()}
-						className="rounded bg-emerald-500 px-2 py-1 font-semibold text-slate-950 text-xs disabled:opacity-50"
-					>
+						className="rounded bg-emerald-500 px-2 py-1 font-semibold text-slate-950 text-xs disabled:opacity-50">
 						Fetch verify payload
 					</button>
 					<button
 						type="button"
 						onClick={run}
 						disabled={!verify.data}
-						className="rounded border border-slate-700 px-2 py-1 text-xs disabled:opacity-50"
-					>
+						className="rounded border border-slate-700 px-2 py-1 text-xs disabled:opacity-50">
 						Recompute client-side
 					</button>
 				</div>
@@ -91,15 +89,13 @@ function VerifySection() {
 					<p className="text-sm">
 						Hash chain:{" "}
 						<strong
-							className={result.hashOk ? "text-emerald-300" : "text-rose-400"}
-						>
+							className={result.hashOk ? "text-emerald-300" : "text-rose-400"}>
 							{result.hashOk ? "PASS" : "FAIL"}
 						</strong>
 						{" · "}
 						Crash point:{" "}
 						<strong
-							className={result.crashOk ? "text-emerald-300" : "text-rose-400"}
-						>
+							className={result.crashOk ? "text-emerald-300" : "text-rose-400"}>
 							{result.crashOk ? "PASS" : "FAIL"}
 						</strong>
 					</p>

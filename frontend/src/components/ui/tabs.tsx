@@ -16,7 +16,7 @@ export function TabsList({
 	return (
 		<BaseTabs.List
 			className={cn(
-				"relative z-0 flex gap-1 rounded-(--radius-control) border border-(--color-border) bg-(--color-bg-1) p-1",
+				"relative z-0 flex gap-1 rounded-control border border-border bg-bg-1 p-1",
 				className,
 			)}
 			{...rest}
@@ -31,8 +31,8 @@ export function TabsTab({
 	return (
 		<BaseTabs.Tab
 			className={cn(
-				"flex h-8 items-center justify-center rounded-(--radius-control) px-3 text-xs font-medium text-(--color-fg-muted) outline-hidden select-none",
-				"hover:text-(--color-fg) data-[active]:text-(--color-fg)",
+				"flex h-8 items-center justify-center rounded-control px-3 text-xs font-medium text-fg-muted outline-hidden select-none",
+				"hover:text-fg data-[active]:text-fg",
 				"focus-visible:outline-2 focus-visible:outline-(--color-neon-cyan)",
 				className,
 			)}
@@ -48,7 +48,7 @@ export function TabsIndicator({
 	return (
 		<BaseTabs.Indicator
 			className={cn(
-				"absolute top-1/2 left-0 z-[-1] h-7 w-[var(--active-tab-width)] translate-x-[var(--active-tab-left)] -translate-y-1/2 rounded-(--radius-control) bg-(--color-bg-2) transition-all duration-200 ease-out",
+				"absolute top-1/2 left-0 z-[-1] h-7 w-[var(--active-tab-width)] translate-x-[var(--active-tab-left)] -translate-y-1/2 rounded-control bg-bg-2 transition-all duration-200 ease-out",
 				className,
 			)}
 			{...rest}

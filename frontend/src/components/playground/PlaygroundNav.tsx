@@ -22,8 +22,7 @@ export function PlaygroundNav() {
 					activeProps={{
 						className:
 							"rounded border border-emerald-500 px-2 py-1 bg-emerald-500/10 text-emerald-200",
-					}}
-				>
+					}}>
 					{label}
 				</Link>
 			))}

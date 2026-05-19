@@ -44,13 +44,12 @@ export function PhaseTimer({
 	const urgent = seconds < 3;
 
 	return (
-		<div className="flex items-center gap-3 rounded-(--radius-pill) bg-(--color-bg-1) px-3 py-1.5 ring-1 ring-inset ring-(--color-border)">
+		<div className="flex items-center gap-3 rounded-pill bg-bg-1 px-3 py-1.5 ring-1 ring-inset ring-border">
 			<div className="relative size-10">
 				<svg
 					viewBox="0 0 40 40"
 					className="size-10 -rotate-90"
-					aria-hidden="true"
-				>
+					aria-hidden="true">
 					<circle
 						cx="20"
 						cy="20"
@@ -78,16 +77,15 @@ export function PhaseTimer({
 					animate={
 						urgent && !reducedMotion ? { scale: [1, 1.12, 1] } : { scale: 1 }
 					}
-					transition={{ repeat: urgent ? Infinity : 0, duration: 0.6 }}
-				>
+					transition={{ repeat: urgent ? Infinity : 0, duration: 0.6 }}>
 					{Math.ceil(seconds)}
 				</motion.span>
 			</div>
 			<div className="flex flex-col leading-tight">
-				<span className="text-[9px] font-bold uppercase tracking-[0.25em] text-(--color-fg-dim)">
+				<span className="text-[9px] font-bold uppercase tracking-[0.25em] text-fg-dim">
 					Next round
 				</span>
-				<span className="font-mono text-[11px] tabular-nums text-(--color-fg-muted)">
+				<span className="font-mono text-[11px] tabular-nums text-fg-muted">
 					{seconds.toFixed(1)}s
 				</span>
 			</div>

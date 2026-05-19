@@ -64,8 +64,7 @@ function BetSection() {
 
 			<Section
 				title="Place bet"
-				description="POST /games/bet — server uses string-cents."
-			>
+				description="POST /games/bet — server uses string-cents.">
 				<BetForm disabled={!canBet} />
 				{myBet ? (
 					<p className="text-slate-400 text-xs">
@@ -77,8 +76,7 @@ function BetSection() {
 
 			<Section
 				title="Cash out"
-				description="POST /games/bet/cashout — server picks the multiplier at the moment it lands."
-			>
+				description="POST /games/bet/cashout — server picks the multiplier at the moment it lands.">
 				<CashOutButton disabled={!canCashOut} />
 			</Section>
 

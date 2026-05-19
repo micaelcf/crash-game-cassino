@@ -48,21 +48,18 @@ function AuthSection() {
 						<button
 							type="button"
 							onClick={() => signOut(getPostSignOutUrl())}
-							className="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800"
-						>
+							className="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800">
 							Sign out
 						</button>
 					) : (
 						<button
 							type="button"
 							onClick={() => signIn(getCallbackUrl())}
-							className="rounded bg-emerald-500 px-2 py-1 font-semibold text-slate-950 text-xs"
-						>
+							className="rounded bg-emerald-500 px-2 py-1 font-semibold text-slate-950 text-xs">
 							Sign in
 						</button>
 					)
-				}
-			>
+				}>
 				<p className="text-slate-300">
 					{isAuthenticated
 						? "Authenticated — claims below."
@@ -82,12 +79,10 @@ function AuthSection() {
 						type="button"
 						onClick={fetchToken}
 						disabled={!isAuthenticated}
-						className="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800 disabled:opacity-50"
-					>
+						className="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800 disabled:opacity-50">
 						Get access token
 					</button>
-				}
-			>
+				}>
 				{tokenErr ? <p className="text-rose-400 text-xs">{tokenErr}</p> : null}
 				<JsonView
 					value={

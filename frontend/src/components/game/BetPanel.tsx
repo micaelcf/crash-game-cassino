@@ -25,12 +25,14 @@ export interface BetPanelProps {
 	round: RoundDto | null;
 	clockOffsetMs?: number;
 	balanceCents?: bigint | null;
+	headerExtra?: React.ReactNode;
 }
 
 export function BetPanel({
 	round,
 	clockOffsetMs = 0,
 	balanceCents,
+	headerExtra,
 }: BetPanelProps) {
 	const userSub = useCurrentUserSub();
 	const [amount, setAmount] = useState<number>(10);
@@ -102,21 +104,20 @@ export function BetPanel({
 			: Number(BET_MAX_CENTS) / 100;
 
 	return (
-		<section className="flex flex-col gap-4 rounded-(--radius-card) bg-(--color-bg-1) p-5 ring-1 ring-inset ring-(--color-border)/70 shadow-(--shadow-card)">
-			<header className="flex items-center justify-between">
-				<h2 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-(--color-fg-muted)">
-					<CoinsIcon
-						size={14}
-						weight="duotone"
-						className="text-(--color-primary)"
-					/>
+		<section className="flex flex-col gap-4 rounded-(--radius-card) bg-bg-1 p-5 ring-1 ring-inset ring-border/70 shadow-(--shadow-card)">
+			<header className="flex items-center justify-between gap-2">
+				<h2 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-fg-muted">
+					<CoinsIcon size={14} weight="duotone" className="text-primary" />
 					Place bet
 				</h2>
-				{myBet && (
-					<span className="rounded-(--radius-pill) bg-(--color-bg-2) px-2.5 py-0.5 font-mono text-[10px] text-(--color-fg-dim)">
-						staked {formatCents(Cents(BigInt(myBet.amountCents)))}
-					</span>
-				)}
+				<div className="flex items-center gap-2">
+					{myBet && (
+						<span className="rounded-pill bg-bg-2 px-2.5 py-0.5 font-mono text-[10px] text-fg-dim">
+							staked {formatCents(Cents(BigInt(myBet.amountCents)))}
+						</span>
+					)}
+					{headerExtra}
+				</div>
 			</header>
 
 			<NumberField
@@ -136,8 +137,7 @@ export function BetPanel({
 						key={v}
 						type="button"
 						onClick={() => setAmount(v)}
-						className="rounded-(--radius-control) bg-(--color-bg-2) px-0 py-1.5 text-xs font-bold tabular-nums text-(--color-fg-muted) ring-1 ring-inset ring-transparent transition-colors hover:text-(--color-primary) hover:ring-(--color-primary)/40 active:translate-y-[1px]"
-					>
+						className="rounded-control bg-bg-2 px-0 py-1.5 text-xs font-bold tabular-nums text-fg-muted ring-1 ring-inset ring-transparent transition-colors hover:text-primary hover:ring-primary/40 active:translate-y-[1px]">
 						{v}
 					</button>
 				))}
@@ -160,8 +160,7 @@ export function BetPanel({
 				size="lg"
 				disabled={!canPlace}
 				onClick={submit}
-				className="w-full"
-			>
+				className="w-full">
 				<LightningIcon size={16} weight="fill" />
 				{placeBet.isPending
 					? "Placing…"
@@ -188,8 +187,7 @@ function MultButton({
 		<button
 			type="button"
 			onClick={onClick}
-			className="rounded-(--radius-control) bg-(--color-bg-2)/60 py-1.5 text-[11px] font-bold uppercase tracking-widest text-(--color-fg-muted) ring-1 ring-inset ring-(--color-border)/60 transition-colors hover:text-(--color-primary) hover:ring-(--color-primary)/50 active:translate-y-[1px]"
-		>
+			className="rounded-control bg-bg-2/60 py-1.5 text-[11px] font-bold uppercase tracking-widest text-fg-muted ring-1 ring-inset ring-border/60 transition-colors hover:text-primary hover:ring-primary/50 active:translate-y-[1px]">
 			{label}
 		</button>
 	);
@@ -228,28 +226,26 @@ function LiveCashoutCard({
 			initial={{ scale: 0.96, opacity: 0 }}
 			animate={{ scale: 1, opacity: 1 }}
 			transition={{ type: "spring", stiffness: 220, damping: 18 }}
-			className="flex flex-col gap-3 rounded-(--radius-card) bg-(--color-bg-1) p-5 ring-2 ring-inset ring-(--color-secondary) shadow-(--shadow-glow-green)"
-		>
+			className="flex flex-col gap-3 rounded-(--radius-card) bg-bg-1 p-5 ring-2 ring-inset ring-secondary shadow-(--shadow-glow-green)">
 			<header className="flex items-baseline justify-between">
-				<span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-(--color-secondary)">
+				<span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-secondary">
 					<TrendUpIcon size={14} weight="bold" />
 					Cash out
 				</span>
-				<span className="font-mono text-xs tabular-nums text-(--color-fg-muted)">
+				<span className="font-mono text-xs tabular-nums text-fg-muted">
 					{formatMultiplier(Math.floor(mult * 100))}
 				</span>
 			</header>
-			<p className="font-mono text-4xl font-black tabular-nums text-(--color-fg)">
+			<p className="font-mono text-4xl font-black tabular-nums text-fg">
 				{formatCents(Cents(payoutCents))}{" "}
-				<span className="text-sm text-(--color-fg-dim)">BRL</span>
+				<span className="text-sm text-fg-dim">BRL</span>
 			</p>
 			<Button
 				variant="success"
 				size="lg"
 				disabled={disabled}
 				onClick={onCashOut}
-				className="w-full"
-			>
+				className="w-full">
 				{disabled
 					? "Cashing out…"
 					: `Cash out ${formatCents(Cents(payoutCents))}`}

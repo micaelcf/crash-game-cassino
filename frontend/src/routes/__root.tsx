@@ -29,6 +29,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 		links: [
 			{ rel: "stylesheet", href: appCss },
+			{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+			{ rel: "alternate icon", href: "/favicon.ico" },
 			{ rel: "preconnect", href: "https://fonts.googleapis.com" },
 			{
 				rel: "preconnect",
@@ -48,15 +50,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function NotFoundPage() {
 	return (
-		<main className="flex min-h-screen flex-col items-center justify-center gap-4 text-(--color-fg)">
+		<main className="flex min-h-screen flex-col items-center justify-center gap-4 text-fg">
 			<h1 className="font-mono text-6xl font-black tracking-tight text-(--color-neon-pink)">
 				404
 			</h1>
-			<p className="text-(--color-fg-muted)">Page not found.</p>
+			<p className="text-fg-muted">Page not found.</p>
 			<a
 				href="/"
-				className="rounded-(--radius-control) bg-(--color-neon-green) px-5 py-2 font-semibold text-(--color-bg-0)"
-			>
+				className="rounded-control bg-(--color-neon-green) px-5 py-2 font-semibold text-bg-0">
 				Go home
 			</a>
 		</main>
@@ -65,17 +66,16 @@ function NotFoundPage() {
 
 function ErrorPage({ error }: { error: Error }) {
 	return (
-		<main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-(--color-fg)">
-			<h1 className="font-mono text-3xl font-bold text-(--color-danger)">
+		<main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-fg">
+			<h1 className="font-mono text-3xl font-bold text-danger">
 				Something broke
 			</h1>
-			<pre className="max-w-2xl overflow-auto rounded-(--radius-card) border border-(--color-border) bg-(--color-bg-1) p-4 text-xs text-(--color-fg-muted)">
+			<pre className="max-w-2xl overflow-auto rounded-(--radius-card) border border-border bg-bg-1 p-4 text-xs text-fg-muted">
 				{error?.message ?? String(error)}
 			</pre>
 			<a
 				href="/"
-				className="rounded-(--radius-control) bg-(--color-neon-green) px-5 py-2 font-semibold text-(--color-bg-0)"
-			>
+				className="rounded-control bg-(--color-neon-green) px-5 py-2 font-semibold text-bg-0">
 				Reload
 			</a>
 		</main>

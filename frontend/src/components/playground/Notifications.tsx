@@ -18,8 +18,7 @@ export function Notifications() {
 			{items.map((n) => (
 				<div
 					key={n.id}
-					className={`pointer-events-auto rounded-md border px-3 py-2 text-xs shadow-lg ${TONE[n.level]}`}
-				>
+					className={`pointer-events-auto rounded-md border px-3 py-2 text-xs shadow-lg ${TONE[n.level]}`}>
 					<div className="flex items-start justify-between gap-2">
 						<span className="font-medium uppercase tracking-wide opacity-70">
 							{n.level}
@@ -28,8 +27,7 @@ export function Notifications() {
 							type="button"
 							onClick={() => dismissNotification(n.id)}
 							className="opacity-60 hover:opacity-100"
-							aria-label="Dismiss"
-						>
+							aria-label="Dismiss">
 							✕
 						</button>
 					</div>

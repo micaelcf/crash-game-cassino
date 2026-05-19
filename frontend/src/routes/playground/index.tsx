@@ -12,8 +12,7 @@ function PlaygroundIndex() {
 		<div className="grid gap-4 md:grid-cols-2">
 			<Section
 				title="What this page is for"
-				description="A scratchpad to exercise each functional requirement before any UI work."
-			>
+				description="A scratchpad to exercise each functional requirement before any UI work.">
 				<p>
 					Each section under <code>/playground</code> drives one piece of the
 					contract end-to-end against the running backend. Use 3 browser

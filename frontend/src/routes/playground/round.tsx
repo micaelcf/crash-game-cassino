@@ -22,12 +22,10 @@ function RoundSection() {
 					<button
 						type="button"
 						onClick={() => round.refetch()}
-						className="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800"
-					>
+						className="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800">
 						Refetch
 					</button>
-				}
-			>
+				}>
 				{err ? (
 					<p className="text-rose-400 text-xs">
 						HTTP {err.status}: {err.message}
@@ -44,8 +42,7 @@ function RoundSection() {
 
 			<Section
 				title="WebSocket event log"
-				description={`Socket.IO via Kong at ${import.meta.env.VITE_WS_URL ?? "?"}/socket.io/ — events: round.betting / round.started / round.crashed / bet.placed / bet.cashed_out.`}
-			>
+				description={`Socket.IO via Kong at ${import.meta.env.VITE_WS_URL ?? "?"}/socket.io/ — events: round.betting / round.started / round.crashed / bet.placed / bet.cashed_out.`}>
 				<EventLog />
 			</Section>
 		</div>
