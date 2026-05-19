@@ -200,6 +200,143 @@ The full set of server-emitted events (typed in
 For the long-form rationale see [`docs/architecture.md`](docs/architecture.md)
 and [`docs/RFC.md`](docs/RFC.md).
 
+<details>
+<summary><strong>📐 Diagram — system architecture &amp; codebase structure</strong></summary>
+
+```mermaid
+flowchart TB
+  Browser(["Browser"])
+
+  subgraph FE["Frontend — TanStack Start · React 19"]
+    direction TB
+    FE_Routes["routes/<br/>login · callback · play · history · leaderboard · me"]
+    FE_Providers["providers/<br/>AuthProvider · SocketProvider · QueryProvider"]
+    FE_Components["components/<br/>CrashChart · BetPanel · RoundBets · HistoryStrip · PlayerHeader"]
+    FE_Lib["lib/<br/>api · application · domain (multiplier · money · formula)"]
+    FE_Routes --> FE_Providers --> FE_Components --> FE_Lib
+  end
+
+  subgraph Kong["Kong — declarative · JWT-aware · CORS · rate-limit"]
+    KGW["/games · /wallets · /socket.io"]
+  end
+
+  subgraph Games["Games service — NestJS · Fastify"]
+    direction TB
+    G_Pres["presentation/<br/>HTTP controllers · Socket.IO gateway"]
+    G_App["application/<br/>use cases · CQRS handlers · bet-limits"]
+    G_Domain["domain/<br/>Round · Bet · provably-fair (HMAC · commit/reveal)"]
+    G_Infra["infrastructure/<br/>MikroORM · outbox · inbox · auth · orchestrator · metrics"]
+    G_Pres --> G_App --> G_Domain
+    G_App --> G_Infra
+    G_Infra --> G_Domain
+  end
+
+  subgraph Wallets["Wallets service — NestJS · Fastify"]
+    direction TB
+    W_Pres["presentation/<br/>GET /me (read-only)"]
+    W_App["application/<br/>ensure · debit · credit"]
+    W_Domain["domain/<br/>Wallet (BIGINT cents)"]
+    W_Infra["infrastructure/<br/>MikroORM · outbox · inbox · consumer · metrics"]
+    W_Pres --> W_App --> W_Domain
+    W_App --> W_Infra
+    W_Infra --> W_Domain
+  end
+
+  subgraph Shared["packages/contracts (@crash/contracts)"]
+    SH["HTTP DTOs · WS event types · pagination · status enums"]
+  end
+
+  PG[("PostgreSQL<br/>games · wallets · logto<br/>+ games_test · wallets_test")]
+  RMQ{{"RabbitMQ<br/>crash.events · DLX"}}
+  Logto[["Logto<br/>OIDC IdP"]]
+  Prom[/"Prometheus"/]
+  Graf[/"Grafana"/]
+
+  Browser <--> FE
+  Browser <--> Logto
+  FE <-- "REST + WS" --> KGW
+  KGW -. "JWKS verify" .-> Logto
+  KGW <--> G_Pres
+  KGW <--> W_Pres
+
+  G_Infra <--> PG
+  W_Infra <--> PG
+  G_Infra <-- "publish/consume" --> RMQ
+  W_Infra <-- "publish/consume" --> RMQ
+
+  G_Infra -. "/metrics" .-> Prom
+  W_Infra -. "/metrics" .-> Prom
+  Prom --> Graf
+
+  FE -. "types" .-> SH
+  G_App -. "types" .-> SH
+  W_App -. "types" .-> SH
+```
+
+Solid lines = synchronous traffic (HTTP / DB / AMQP). Dashed lines =
+JWKS lookups, metrics scraping, and shared compile-time types.
+
+</details>
+
+<details>
+<summary><strong>🎲 Diagram — end-to-end game flow (bet → multiplier → cashout / crash)</strong></summary>
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor P as Player
+  participant FE as Frontend
+  participant K as Kong
+  participant G as Games svc
+  participant DB as PostgreSQL
+  participant MQ as RabbitMQ
+  participant W as Wallets svc
+
+  Note over G: Round orchestrator opens betting window
+  G-->>FE: WS round.betting { roundId, commitmentHash, endsAt }
+
+  P->>FE: Enter amount → Place bet
+  FE->>K: POST /games/bet (Bearer JWT)
+  K->>G: forward (JWT validated against Logto JWKS)
+  G->>DB: persist Bet(PENDING) + OutboxEvent(bet.placed) (single TX)
+  G-->>FE: 201 { betId, status: PENDING }
+  G->>MQ: publish bet.placed (drained from outbox)
+  MQ->>W: deliver bet.placed
+  W->>DB: ensure inbox(messageId) · debit wallet · Outbox(wallet.debited)
+  W->>MQ: publish wallet.debited
+  MQ->>G: deliver wallet.debited
+  G->>DB: inbox guard · Bet.confirm()
+  G-->>FE: WS bet.placed { betId, amountCents }
+
+  Note over G,FE: Betting phase ends — flight begins
+  G-->>FE: WS round.started { startTime, k }
+  Note over FE: requestAnimationFrame loop<br/>m(t) = exp(k · Δt) — no per-frame WS
+
+  alt Player cashes out before crash
+    P->>FE: Click Cash out
+    FE->>K: POST /games/bet/cashout
+    K->>G: forward
+    G->>DB: Bet.markWon(multiplier, payout) + Outbox(player.won)
+    G-->>FE: 200 { payoutCents, multiplier }
+    G->>MQ: publish player.won
+    MQ->>W: deliver player.won
+    W->>DB: credit wallet (inbox-guarded)
+    G-->>FE: WS bet.cashed_out
+  else Round crashes first
+    G->>DB: Round.crash(serverSeed) · settle CONFIRMED bets → LOST
+    G-->>FE: WS round.crashed { crashPoint, serverSeed, nonce }
+    Note over FE: Verify panel exposes the<br/>HMAC chain for any past round
+  end
+
+  Note over G: Inter-round gap, then commitmentHash for next seed is published
+```
+
+The same flow is asserted end-to-end by
+`services/games/tests/e2e/*.e2e.spec.ts` against the shared Postgres +
+RabbitMQ stack.
+
+</details>
+
 ---
 
 ## Repository layout
