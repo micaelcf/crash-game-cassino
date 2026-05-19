@@ -185,6 +185,18 @@ Logto setup needed.
   drift, and `round.crashed` carries the exact final value plus the
   verification payload.
 
+The full set of server-emitted events (typed in
+[`@crash/contracts`](packages/contracts/src/ws)) is:
+
+| Event | When | Payload highlights |
+|---|---|---|
+| `round.betting` | Betting window opens | `roundId`, `commitmentHash`, `endsAt` |
+| `round.started` | Multiplier starts climbing | `startTime`, `k` (growth rate) |
+| `round.crashed` | Round ends | `crashPoint`, `serverSeed`, `nonce` |
+| `bet.placed` | Anyone places a bet | bet summary + masked user |
+| `bet.cashed_out` | Anyone cashes out | payout multiplier + amount |
+| `bet.cancelled` | Bet rejected post-fact (e.g. debit failure) | `betId`, reason |
+
 For the long-form rationale see [`docs/architecture.md`](docs/architecture.md)
 and [`docs/RFC.md`](docs/RFC.md).
 
@@ -204,7 +216,8 @@ crash-game-cassino/
 │   │   └── tests/                # unit + integration + e2e (testcontainers)
 │   └── wallets/                  # NestJS — wallet, debit/credit, outbox/inbox
 ├── packages/
-│   └── contracts/                # Shared event / DTO contracts (@crash/contracts)
+│   └── contracts/                # Shared HTTP DTOs, WS event types, pagination
+│                                 # and bet/round status enums (@crash/contracts)
 ├── frontend/                     # TanStack Start app
 │   ├── src/
 │   │   ├── routes/               # file-based routes (login, play, history, ...)
@@ -336,10 +349,18 @@ git add src/migrations/Migration*.ts
 | Scope | Command | What it covers |
 |---|---|---|
 | **Unit (Games)** | `bun run --cwd services/games test` | Round lifecycle, bet validation, cashout math, provably-fair determinism |
-| **Unit (Wallets)** | `bun run --cwd services/wallets test` | Credit, debit, insufficient balance, monetary precision |
+| **Unit (Wallets)** | `bun run --cwd services/wallets test` | Credit, debit, insufficient balance, monetary precision (BigInt) |
 | **Integration / E2E** | `bun run --cwd services/<svc> test:integration` | API → DB → broker round-trips (uses Testcontainers, requires Docker/Podman) |
-| **Frontend** | `cd frontend && bun run test` | Component + hook tests via Vitest + Testing Library |
+| **Frontend** | `cd frontend && bun run test` | Components, routes, domain helpers — Vitest + Testing Library + **MSW** (HTTP) with mocked Logto + Socket providers |
 | **All units (root)** | `bun run test:unit` | Both services, unit tier |
+
+Highlight specs:
+
+- **Games — domain**: `round.entity.spec.ts`, `bet.entity.spec.ts`, `provably-fair.service.spec.ts` (deterministic crash point + hash-chain verification).
+- **Games — application**: place-bet, cash-out, settle-round use cases.
+- **Games — E2E**: `bets.controller.e2e.spec.ts`, `orchestrator.e2e.spec.ts`, `consumer.e2e.spec.ts`, `cross-service.e2e.spec.ts` (games ↔ wallets via real RabbitMQ + Postgres).
+- **Wallets — domain & application**: credit / debit success + failure paths, auto-provision, idempotent consumer.
+- **Wallets — E2E**: `wallets.controller.e2e.spec.ts`, `wallets.consumer.e2e.spec.ts`, `rabbit-topology.integration.spec.ts`.
 
 > Integration suites use **Testcontainers** for ephemeral Postgres + RabbitMQ.
 > They auto-skip when the container runtime isn't reachable, so they're safe to
@@ -348,12 +369,35 @@ git add src/migrations/Migration*.ts
 ### Deterministic E2E scenarios
 
 `scripts/seed-e2e.ts` injects pre-computed seed chains so you can reproduce
-specific crash sequences (e.g. "crash exactly at 1.5x", "big win streak"):
+specific crash sequences. Available scenarios live under `scripts/scenarios/`:
+
+| Scenario | What it sets up |
+|---|---|
+| `crash-at-1.5` | Round configured to crash at exactly `1.50x` — handy for assertion-driven cashout tests |
+| `big-win` | Pre-loaded large stake reaching a high multiplier before crash |
+| `streak-of-five` | Five consecutive rounds with curated crash points |
 
 ```bash
 bun scripts/seed-e2e.ts --list
 bun scripts/seed-e2e.ts --scenario crash-at-1.5
 ```
+
+The underlying brute-forced seed → crash-point table is generated offline by
+`scripts/generate-seed-table.ts` and committed under
+`scripts/fixtures/crash-seeds.json`, so scenarios are reproducible on any
+machine without re-running the HMAC search.
+
+### Continuous Integration
+
+GitHub Actions workflow at [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+runs on every push and pull request:
+
+1. `bun install` (cached).
+2. `bun run lint` — Biome across the monorepo.
+3. `bun run typecheck` — `tsc --noEmit` on both services.
+4. `bun run test:unit` — Vitest unit tier for `games` + `wallets`.
+
+Concurrency is scoped to the branch so reruns cancel in-flight jobs.
 
 ---
 
@@ -426,22 +470,24 @@ without `if`s in the README.
 
 From the challenge's optional list:
 
-- ✅ **Transactional outbox / inbox** (at-least-once + exactly-once processing)
-- ✅ **Leaderboard** (Top players by profit, in-app + API)
-- ✅ **Observability** (Prometheus + Grafana, pre-provisioned dashboard,
-  WS latency / round metrics / RTP)
-- ✅ **Deterministic E2E seed table** (reproduce any crash sequence)
-- ✅ **Formula in the UI** (Provably-fair "show me the math" popover)
-- ✅ **Rate limiting at the gateway** (Kong `rate-limiting` plugin, 120/min)
+- ✅ **Transactional outbox / inbox** (at-least-once + exactly-once processing,
+  per-message idempotency on both producer and consumer sides).
+- ✅ **Leaderboard** (Top players by profit over a 24h / 7d window, served by
+  the games service, embedded in the play page and on a dedicated route).
+- ✅ **Observability** (Prometheus + Grafana, pre-provisioned dashboard, WS
+  latency, round / bet counters, outbox publish lag).
+- ✅ **Deterministic E2E seed table** — `generate-seed-table.ts` precomputes
+  HMAC → crash-point pairs; `seed-e2e.ts` replays canned scenarios.
+- ✅ **Formula in the UI** — provably-fair "show me the math" popover on the
+  chart, with a verification panel under `/history/:roundId`.
+- ✅ **Rate limiting at the gateway** — Kong `rate-limiting` plugin, 120/min.
 - ✅ **OpenAPI** spec on both services, rendered with **Scalar** (interactive
-  API reference, try-it-out client, dark-mode `saturn` theme)
-
-Not implemented:
-
-- ⛔ Auto-cashout / auto-bet (foundation is there in the domain model; UI
-  surface intentionally left out to keep the demo focused).
-- ⛔ Storybook (component library is small enough to inspect via the running
-  app).
+  API reference, try-it-out client, dark-mode `saturn` theme).
+- ✅ **CI pipeline** — GitHub Actions runs lint + typecheck + unit tests on
+  every push / PR.
+- ✅ **Atomic, gitmoji-tagged commit history** — every change is scoped and
+  conventionally tagged (`:sparkles: feat`, `:white_check_mark: test`,
+  `:hammer: chore`, …) so the progression of the work reads top-to-bottom.
 
 ---
 
