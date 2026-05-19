@@ -201,6 +201,43 @@ async function ensureDemoUser(token: string): Promise<void> {
 	)
 }
 
+const JWT_CUSTOMIZER_SCRIPT = `const getCustomJwtClaims = async ({ context }) => {
+	return {
+		username: context?.user?.username ?? null,
+		name: context?.user?.name ?? null,
+	};
+};`
+
+async function ensureAccessTokenJwtCustomizer(token: string): Promise<void> {
+	// Logto access tokens for API resources don't carry profile claims by
+	// default. The JWT customizer hook merges custom claims into every issued
+	// access token — we inject `username` + `name` so backend services can
+	// display the player without a separate Management API lookup.
+	const call = api(token)
+	const body = {
+		script: JWT_CUSTOMIZER_SCRIPT,
+		environmentVariables: {},
+		contextSample: {
+			user: {
+				id: 'sampleuser01',
+				username: 'sample',
+				name: 'Sample Name',
+			},
+		},
+	}
+	const res = await call(
+		'PUT',
+		'/api/configs/jwt-customizer/access-token',
+		body,
+	)
+	if (!res.ok) {
+		throw new Error(
+			`Configure JWT customizer failed: ${res.status} ${await res.text()}`,
+		)
+	}
+	console.log('✓ Access-token JWT customizer configured (username, name)')
+}
+
 async function ensureApiResource(token: string): Promise<void> {
 	const call = api(token)
 	const listRes = await call('GET', '/api/resources?page=1&page_size=100')
@@ -275,6 +312,7 @@ async function main(): Promise<void> {
 	const token = await fetchAccessToken(secret)
 	const appId = await ensureSpaApp(token)
 	await ensureApiResource(token)
+	await ensureAccessTokenJwtCustomizer(token)
 	await ensureDemoUser(token)
 	updateFrontendEnv(appId)
 
