@@ -1,6 +1,7 @@
 import {
 	AnimatePresence,
 	motion,
+	useAnimationControls,
 	useMotionValue,
 	useReducedMotion,
 	useTransform,
@@ -44,6 +45,22 @@ const SR_LIVE_INTERVAL_MS = 500;
 // to the left; lower = more headroom on top, dot drifts further from corner.
 const HEADROOM_FRAC = 0.85;
 
+// Discrete size tiers for the centered multiplier readout. Crossing a tier
+// triggers a spring/shake animation — fewer tiers in low ranges (early game
+// feels punchier) and sparser ones as the multiplier climbs. Returns 0 at
+// rest (1.00x → 1.99x).
+function multTier(m: number): number {
+	if (m < 2) return 0;
+	if (m < 10) return Math.floor((m - 2) / 2) + 1; // 2,4,6,8 → 1..4
+	if (m < 20) return Math.floor((m - 10) / 5) + 5; // 10,15 → 5,6
+	if (m < 50) return Math.floor((m - 20) / 10) + 7; // 20,30,40 → 7,8,9
+	return 10;
+}
+
+function tierScale(tier: number): number {
+	return 1 + tier * 0.12; // tier 0 = 1.00, tier 10 ≈ 2.20
+}
+
 export function CrashChart({
 	phase,
 	startTimeMs,
@@ -62,6 +79,8 @@ export function CrashChart({
 	const labelRef = useRef<HTMLSpanElement>(null);
 	const srRef = useRef<HTMLSpanElement>(null);
 	const lastSrAtRef = useRef(0);
+	const tierRef = useRef(0);
+	const labelControls = useAnimationControls();
 
 	// Track whether we actually witnessed the round in FLYING this mount.
 	// Used to suppress the crash overlay when the page lands directly in
@@ -98,7 +117,25 @@ export function CrashChart({
 			viewMultRef.current = VIEW_MULT_MIN;
 			viewSecondsRef.current = VIEW_SECONDS_MIN;
 		}
-	}, [phase, frozenAtHundredths, multiplier, elapsedSec]);
+		// Snap tier readout back to base when the round isn't flying.
+		if (phase !== RoundStatus.FLYING) {
+			tierRef.current = 0;
+			labelControls.start({
+				scale: 1,
+				rotate: 0,
+				transition: reducedMotion
+					? { duration: 0 }
+					: { type: "spring", stiffness: 220, damping: 20 },
+			});
+		}
+	}, [
+		phase,
+		frozenAtHundredths,
+		multiplier,
+		elapsedSec,
+		labelControls,
+		reducedMotion,
+	]);
 
 	useMultiplierLoop({
 		startTimeMs,
@@ -148,6 +185,36 @@ export function CrashChart({
 			}
 			if (labelRef.current) labelRef.current.textContent = `${m.toFixed(2)}x`;
 
+			// Detect tier crossing → trigger shake-then-grow spring on the
+			// label wrapper. Compares against the last-seen tier so each
+			// threshold fires exactly once per round.
+			const newTier = multTier(m);
+			if (newTier !== tierRef.current) {
+				const prev = tierRef.current;
+				tierRef.current = newTier;
+				const target = tierScale(newTier);
+				if (reducedMotion) {
+					labelControls.set({ scale: target, rotate: 0 });
+				} else if (newTier > prev) {
+					labelControls.start({
+						scale: [
+							tierScale(prev) * 0.92,
+							target * 1.18,
+							target * 0.94,
+							target,
+						],
+						rotate: [-4, 4, -5.5, 0],
+						transition: { duration: 0.55, ease: [0.2, 0.8, 0.2, 1] },
+					});
+				} else {
+					labelControls.start({
+						scale: target,
+						rotate: 0,
+						transition: { type: "spring", stiffness: 220, damping: 18 },
+					});
+				}
+			}
+
 			// Repaint Y-axis labels to match the new viewport.
 			for (let i = 0; i <= GRID_DIVISIONS; i++) {
 				const node = gridLabelRefs.current[i];
@@ -170,7 +237,7 @@ export function CrashChart({
 			unsubM();
 			unsubT();
 		};
-	}, [multiplier, elapsedSec]);
+	}, [multiplier, elapsedSec, labelControls, reducedMotion]);
 
 	const labelColor = useTransform(
 		multiplier,
@@ -192,17 +259,23 @@ export function CrashChart({
 					<PhaseTag phase={phase} reducedMotion={reducedMotion} />
 					<FormulaPopover growthRate={growthRate} roundId={roundId} />
 				</div>
-				<motion.span
-					ref={labelRef}
-					aria-hidden="true"
-					className="font-mono text-5xl font-black tabular-nums leading-none sm:text-6xl"
-					style={{ color: labelColor }}>
-					1.00x
-				</motion.span>
 				<span className="hidden text-[10px] font-bold uppercase tracking-[0.35em] text-fg-dim sm:inline">
 					Live
 				</span>
 			</div>
+
+			<motion.div
+				aria-hidden="true"
+				animate={labelControls}
+				initial={{ scale: 1, rotate: 0 }}
+				className="pointer-events-none absolute right-4 top-3 z-10 origin-top-right will-change-transform sm:left-1/2 sm:right-auto sm:top-[10%] sm:origin-center sm:-translate-x-1/2 sm:-translate-y-1/2">
+				<motion.span
+					ref={labelRef}
+					className="block font-mono text-3xl font-black tabular-nums leading-none drop-shadow-[0_4px_24px_rgba(0,0,0,0.45)] sm:text-4xl md:text-6xl"
+					style={{ color: labelColor }}>
+					1.00x
+				</motion.span>
+			</motion.div>
 
 			<span ref={srRef} className="sr-only" aria-live="polite" />
 
