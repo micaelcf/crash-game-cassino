@@ -1,5 +1,5 @@
-import { EnsureWalletCommand } from '@application/wallet/dtos/ensure-wallet.command'
 import { DebitWalletCommand } from '@application/wallet/dtos/debit-wallet.command'
+import { EnsureWalletCommand } from '@application/wallet/dtos/ensure-wallet.command'
 import { DebitWalletUseCase } from '@application/wallet/use-cases/debit-wallet.use-case'
 import type { EnsureWalletUseCase } from '@application/wallet/use-cases/ensure-wallet.use-case'
 import { Wallet } from '@domain/wallet/wallet.entity'

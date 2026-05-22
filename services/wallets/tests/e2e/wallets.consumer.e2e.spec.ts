@@ -151,8 +151,7 @@ describe('Wallets consumer (e2e)', () => {
 				probe.channel,
 				PROBE_QUEUE,
 				(m) =>
-					m.routingKey === 'wallet.debited' &&
-					m.payload.userId === 'newcomer',
+					m.routingKey === 'wallet.debited' && m.payload.userId === 'newcomer',
 			)
 
 			expect(event.payload).toMatchObject({

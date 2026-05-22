@@ -1,5 +1,5 @@
-import { EnsureWalletCommand } from '@application/wallet/dtos/ensure-wallet.command'
 import { DebitWalletCommand } from '@application/wallet/dtos/debit-wallet.command'
+import { EnsureWalletCommand } from '@application/wallet/dtos/ensure-wallet.command'
 import { EnsureWalletUseCase } from '@application/wallet/use-cases/ensure-wallet.use-case'
 import { InsufficientBalanceException } from '@domain/wallet/insufficient-balance.exception'
 import { Wallet } from '@domain/wallet/wallet.entity'
