@@ -1,14 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
+import type { ApiError } from "@crash/api-client";
+import { useGetLeaderboard as useGetLeaderboardOrval } from "@crash/api-client/games";
 import type { LeaderboardWindow } from "#/lib/api/types";
-import { useApiClient } from "#/lib/application/api-client";
 import { qk } from "#/lib/application/keys";
-import { getLeaderboard } from "./api";
 
 export function useLeaderboard(window: LeaderboardWindow, limit = 20) {
-	const api = useApiClient();
-	return useQuery({
-		queryKey: qk.leaderboard.list(window, limit),
-		queryFn: () => getLeaderboard(api, window, limit),
-		staleTime: 30_000,
-	});
+	const query = useGetLeaderboardOrval(
+		{ window, limit },
+		{
+			query: {
+				queryKey: qk.leaderboard.list(window, limit),
+				staleTime: 30_000,
+			},
+		},
+	);
+	return {
+		...query,
+		error: query.error as ApiError | null,
+	};
 }

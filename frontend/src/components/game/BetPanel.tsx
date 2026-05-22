@@ -80,7 +80,7 @@ export function BetPanel({
 			},
 		});
 
-	if (hasPending) {
+	if (hasPending && myBet && round) {
 		return (
 			<LiveCashoutCard
 				bet={myBet}

@@ -23,7 +23,8 @@ Always use **Bun**, not npm/pnpm/yarn. The `pnpm` key in `package.json` is vesti
 - Tailwind CSS v4 (via `@tailwindcss/vite`)
 - Base UI (`@base-ui/react`) for primitives, Motion (`motion`, the Framer Motion successor) for animation, Phosphor Icons (`@phosphor-icons/react`)
 - `socket.io-client` for the live round feed; `@logto/react` for OIDC
-- `@crash/contracts` (workspace) — shared wire types (REST DTOs + Socket.IO event payloads)
+- `@crash/api-client` (workspace) — orval-generated TanStack Query hooks + DTOs for both backends. Regenerate with `bun run codegen` from the repo root.
+- `@crash/contracts` (workspace) — slim package: Socket.IO event payloads + RoundStatus/BetStatus enums + pagination types. HTTP DTOs now come from `@crash/api-client`.
 - i18n: **none for now** (wuchale removed; plain English JSX strings only — re-introduce later)
 - Biome 2.4 for lint + format (tabs, double quotes)
 - Vitest + Testing Library + jsdom + MSW for HTTP mocking
@@ -88,8 +89,8 @@ Required: `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_APP_ID`, `VITE_API_BASE_URL`, `VITE
 
 ## API + WebSocket integration
 
-- REST goes through Kong at `VITE_API_BASE_URL` via `lib/api/http/client.ts` (`createApiClient`), surfaced to React as `useApiClient()` in `lib/application/api-client.ts`. It injects `Authorization: Bearer <token>` from Logto and throws `ApiError` on non-2xx.
-- Per-domain hooks in `lib/application/{bets,rounds,wallet,leaderboard}` follow an `api.ts` + `queries.ts` split — raw fetcher + TanStack Query wrappers. Query keys come from `lib/application/keys.ts`.
+- REST goes through Kong at `VITE_API_BASE_URL`. The orval mutator (`packages/api-client/src/mutator/fetch-client.ts`) handles `Authorization: Bearer <token>` + `ApiError` on non-2xx; `ApiClientBridge` (mounted in `__root.tsx` inside `<AuthProvider>`) wires the token getter to the module via `configureApiClient`.
+- Per-domain `lib/application/{bets,rounds,wallet,leaderboard}/queries.ts` are thin **adapters** over the orval hooks. They unwrap the `{ data, status, headers }` envelope, narrow `error` to `ApiError`, keep the existing `useFoo()` names, and centralise cross-query invalidation (place/cash-out → invalidate wallet). Generated hooks live in `@crash/api-client/games` and `@crash/api-client/wallets`. Query keys come from `lib/application/keys.ts`.
 - Socket.IO connects to `VITE_WS_URL` (same gateway, `websocket` transport only). `createGameSocket` attaches the JWT through the handshake `auth` callback; payload types come from `@crash/contracts` via `lib/api/ws/events.ts`.
 - The live multiplier is **projected client-side** from `round.started { startTime, k }` using `requestAnimationFrame` + local clock (see `lib/domain/multiplier.ts → useMultiplierLoop` / `projectMultiplier`). Never put the per-frame value in React state — push it into Canvas/SVG directly.
 

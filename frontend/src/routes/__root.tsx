@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import { ToastProvider, TooltipProvider } from "#/components/ui";
+import { ApiClientBridge } from "#/providers/ApiClientBridge";
 import { AuthProvider } from "#/providers/AuthProvider";
 import { NotificationsBridge } from "#/providers/NotificationsBridge";
 import TanStackQueryDevtools from "#/providers/QueryDevtools";
@@ -93,6 +94,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<body>
 				<TanstackQueryProvider queryClient={queryClient}>
 					<AuthProvider>
+						<ApiClientBridge />
 						<SocketProvider>
 							<TooltipProvider>
 								<ToastProvider>

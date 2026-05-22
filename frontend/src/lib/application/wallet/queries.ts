@@ -1,16 +1,19 @@
+import type { ApiError } from "@crash/api-client";
+import { useGetMyWallet as useGetMyWalletOrval } from "@crash/api-client/wallets";
 import { useLogto } from "@logto/react";
-import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "#/lib/application/api-client";
 import { qk } from "#/lib/application/keys";
-import { getMyWallet } from "./api";
 
 export function useMyWallet() {
-	const api = useApiClient();
 	const { isAuthenticated } = useLogto();
-	return useQuery({
-		queryKey: qk.wallet.me(),
-		queryFn: () => getMyWallet(api),
-		retry: false,
-		enabled: isAuthenticated,
+	const query = useGetMyWalletOrval({
+		query: {
+			queryKey: qk.wallet.me(),
+			retry: false,
+			enabled: isAuthenticated,
+		},
 	});
+	return {
+		...query,
+		error: query.error as ApiError | null,
+	};
 }

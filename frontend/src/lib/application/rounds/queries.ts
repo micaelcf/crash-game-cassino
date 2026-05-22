@@ -1,15 +1,24 @@
-import { useQuery } from "@tanstack/react-query";
-import { useApiClient } from "#/lib/application/api-client";
+import type { ApiError } from "@crash/api-client";
+import {
+	useGetCurrentRound as useGetCurrentRoundOrval,
+	useGetRoundHistory as useGetRoundHistoryOrval,
+	useVerifyRound as useVerifyRoundOrval,
+} from "@crash/api-client/games";
 import { qk } from "#/lib/application/keys";
-import { getCurrentRound, getRoundHistory, verifyRound } from "./api";
+
+// The generated hooks default `TError` to `void`, which TS narrows to
+// `never` at consumption time. Adapters re-cast `error` to
+// `ApiError | null` since the orval mutator throws `ApiError` on every
+// non-2xx — the only thing consumers ever observe in `error`.
 
 export function useCurrentRound() {
-	const api = useApiClient();
-	return useQuery({
-		queryKey: qk.rounds.current(),
-		queryFn: () => getCurrentRound(api),
-		refetchInterval: false,
+	const query = useGetCurrentRoundOrval({
+		query: {
+			queryKey: qk.rounds.current(),
+			refetchInterval: false,
+		},
 	});
+	return { ...query, error: query.error as ApiError | null };
 }
 
 export function useRoundHistory({
@@ -19,25 +28,20 @@ export function useRoundHistory({
 	page?: number;
 	pageSize?: number;
 } = {}) {
-	const api = useApiClient();
-	return useQuery({
-		queryKey: qk.rounds.history(page, pageSize),
-		queryFn: () => getRoundHistory(api, { page, pageSize }),
-	});
+	const query = useGetRoundHistoryOrval(
+		{ page, pageSize },
+		{ query: { queryKey: qk.rounds.history(page, pageSize) } },
+	);
+	return { ...query, error: query.error as ApiError | null };
 }
 
 export function useVerifyRound(roundId: string | undefined) {
-	const api = useApiClient();
-	return useQuery({
-		queryKey: qk.rounds.verify(roundId ?? ""),
-		queryFn: () => {
-			if (!roundId) {
-				// `enabled` gate prevents this from running; guard appeases the type.
-				throw new Error("roundId is required");
-			}
-			return verifyRound(api, roundId);
+	const query = useVerifyRoundOrval(roundId ?? "", {
+		query: {
+			queryKey: qk.rounds.verify(roundId ?? ""),
+			enabled: Boolean(roundId),
+			retry: false,
 		},
-		enabled: Boolean(roundId),
-		retry: false,
 	});
+	return { ...query, error: query.error as ApiError | null };
 }

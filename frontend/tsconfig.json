@@ -1,5 +1,13 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".output",
+    "src/routeTree.gen.ts",
+    "**/*.gen.ts",
+    "**/*.gen.tsx"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
