@@ -1,7 +1,16 @@
 import "@testing-library/jest-dom/vitest";
+import { configureApiClient } from "@crash/api-client";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import { server } from "./msw/server";
+
+// Wire the orval mutator against the MSW base URL so every test —
+// including unit tests that render hooks without `<ApiClientBridge />`
+// — produces fully-qualified requests MSW can intercept.
+configureApiClient({
+	baseUrl: "http://api.test.local",
+	getToken: () => "test-token",
+});
 
 vi.mock("#/env", () => ({
 	env: {
