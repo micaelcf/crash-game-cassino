@@ -4,7 +4,7 @@
 
 ## Why
 
-`docs/raw/BASE_CHALANGE.md` lists optional bonuses that differentiate the submission. Three of them are frontend-only:
+The roadmap calls out optional bonus features beyond the core gameplay loop. Three of them are frontend-only:
 
 1. **Leaderboard** — top players by gross winnings (24h / 7d).
 2. **Curve formula in UI** — display the multiplier formula for transparency.

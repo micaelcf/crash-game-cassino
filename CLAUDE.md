@@ -65,7 +65,7 @@ One-liners — see [`docs/architecture.md`](./docs/architecture.md) and [`docs/R
 
 ## Project decisions to not relitigate
 
-- **Logto, not Keycloak.** The original challenge spec mentions Keycloak; this project chose Logto for OIDC. Don't propose swapping back.
+- **Logto for OIDC.** Project uses Logto as the IdP. Don't propose swapping to Keycloak or another provider.
 - **The user runs their own commits.** Do not invoke commit skills, do not run `git commit`/`git add` on your own — leave changes staged or unstaged for the user to review.
 - **TDD for important use cases.** Write tests first for application-layer use cases, domain logic, money flows, and the provably-fair seed chain. Throwaway scripts and pure UI tweaks are exempt.
 - **Prefer MikroORM QueryBuilder** (`em.createQueryBuilder(...)`) over raw SQL for joins and aggregates. Drop to raw SQL only when QB genuinely can't express the query.

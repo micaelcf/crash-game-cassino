@@ -6,7 +6,7 @@ reactivity, and resilience to network failures are essential.
 ## Technology stack
 
 - **Framework**: TanStack Start (built on top of TanStack Router). Next.js and
-  Vite + React are the alternatives accepted by the challenge.
+  Vite + React are viable alternatives.
 - **Runtime**: Bun
 - **Styling**: Tailwind CSS v4 and shadcn/ui
 - **Animations**: Framer Motion

@@ -1,6 +1,6 @@
 # Frontend Functional Requirements — Crash Game
 
-> Source: `docs/raw/BASE_CHALANGE.md`, `docs/RFC.md`, `docs/architecture.md`, `docs/frontend.md`, `docs/patterns/frontend.md`, `docs/anti-patterns/frontend.md`, `docs/references/provably-fair.md`.
+> Source: `docs/RFC.md`, `docs/architecture.md`, `docs/frontend.md`, `docs/patterns/frontend.md`, `docs/anti-patterns/frontend.md`, `docs/references/provably-fair.md`.
 >
 > Scope: **functionality only**. UI/UX (layout, theming, motion polish, copy) is handled in a separate session. This document defines what the frontend must do for the game to function correctly.
 
@@ -55,7 +55,7 @@ Configure via env (already in `src/env.ts`): `VITE_LOGTO_ENDPOINT`, `VITE_LOGTO_
    - WebSocket: pass token in the Socket.IO `auth` handshake payload (`{ auth: { token } }`). Re-handshake when the token rotates.
 5. Refresh: rely on `@logto/react`'s silent refresh. If `getAccessToken` throws, treat as unauthenticated and prompt re-login.
 6. Routes that need auth: `/dashboard`, `/game` (and any sub-routes), `/history/me`. Routes that are public: `/`, `/login`, `/callback`, `/history` (global round history).
-7. **No RBAC for now** — challenge does not require role/permission checks. A valid Logto session is the only authorization gate; backend trusts the JWT `sub` to scope per-user data. If RBAC is introduced later, add scope checks via `getAccessTokenClaims().scope`.
+7. **No RBAC for now** — scope is single-tier, no role/permission checks. A valid Logto session is the only authorization gate; backend trusts the JWT `sub` to scope per-user data. If RBAC is introduced later, add scope checks via `getAccessTokenClaims().scope`.
 
 ---
 
@@ -337,7 +337,7 @@ TanStack Router file-based: each path = one file under `src/routes/`. Protected 
 2. **Money on the wire** — `amountCents` / `payoutCents` are `string` of integer cents (`BIGINT` serialized). `crashPointHundredths` / `multiplierHundredths` are `number` integer hundredths. Bet input is a masked decimal locally; only string cents go over the wire.
 3. **No `round.tick`** — no periodic resync packet exists. Client computes the curve from `startTime` + `growthRate` alone. Use `GET /games/rounds/current` if a hard resync is needed.
 4. **Bet confirmation path** — `bet.placed` carries `betId` and fires only after the wallet debit succeeds. Match the WS event against the `betId` returned by `POST /games/bet` to promote optimistic `PENDING` → `CONFIRMED`. No separate `bet.confirmed` event.
-5. **No RBAC** — challenge does not require it. A valid Logto JWT is the only gate. Add scope-based checks only if/when introduced server-side.
+5. **No RBAC** — scope is single-tier. A valid Logto JWT is the only gate. Add scope-based checks only if/when introduced server-side.
 
 ## 19. Outstanding (not blockers, just unresolved)
 

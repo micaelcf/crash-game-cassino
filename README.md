@@ -1,9 +1,9 @@
 # Crash Game 🎲
 
 A real-time, multiplayer **Crash** casino game built as a full-stack reference
-implementation for the [Jungle Gaming](docs/raw/BASE_CHALANGE.md) challenge.
-Players place a bet, watch a multiplier climb from `1.00x`, and try to cash out
-before the round crashes. Late by a millisecond? The house keeps the bet.
+implementation. Players place a bet, watch a multiplier climb from `1.00x`, and
+try to cash out before the round crashes. Late by a millisecond? The house
+keeps the bet.
 
 The repo is a **Bun monorepo** with two NestJS services (`games`, `wallets`)
 talking over RabbitMQ, a TanStack Start frontend, Kong in front, Logto for auth,
@@ -579,18 +579,18 @@ Concurrency is scoped to the branch so reruns cancel in-flight jobs.
 This is the short, opinionated version. The long-form rationale lives in
 [`docs/`](docs/).
 
-### 🔑 Logto instead of Keycloak
+### 🔑 Logto for OIDC
 
-The challenge spec mentions Keycloak. This implementation uses **Logto** under
-the same OIDC contract (auth-code + PKCE for the SPA, JWT validation at Kong
-via JWKS).
+This implementation uses **Logto** for the OIDC contract — auth-code + PKCE
+for the SPA, JWT validation at Kong via JWKS.
 
-- **Why**: Logto's developer UX is dramatically nicer — modern admin console,
-  a clean Management API, and a `cli db seed --swe` bootstrap that gets us to
-  a working tenant in seconds.
+- **Why**: Logto's developer UX is dramatically nicer than the Keycloak
+  default many casino shops reach for — modern admin console, a clean
+  Management API, and a `cli db seed --swe` bootstrap that gets us to a
+  working tenant in seconds.
 - **Trade-off**: less well-known than Keycloak in some shops. Mitigated by
-  pinning the public OIDC discovery contract — swapping back to Keycloak is a
-  config change, not a code change.
+  pinning the public OIDC discovery contract — swapping IdPs is a config
+  change, not a code change.
 
 ### 🐇 RabbitMQ with outbox + inbox
 
@@ -660,7 +660,7 @@ without `if`s in the README.
 
 ## Bonus features delivered
 
-From the challenge's optional list:
+Beyond the core gameplay loop:
 
 - ✅ **Transactional outbox / inbox** (at-least-once + exactly-once processing,
   per-message idempotency on both producer and consumer sides).
@@ -716,7 +716,6 @@ running the integration suite. They skip cleanly if unavailable.
 
 ## License
 
-This project was built as a technical challenge submission. Code is provided
-as-is for evaluation purposes.
+Code is provided as-is for reference and learning purposes.
 
 🎰 _May the multiplier be ever in your favor._

@@ -121,7 +121,7 @@ Note: older docs/templates reference `.output/server/index.js` — that path no 
 - `QueryProvider.tsx` exports both `getContext()` (used by `getRouter()` to wire the SSR `QueryClient`) and a default `TanstackQueryProvider` that actually mounts `QueryClientProvider` — both are needed; don't delete either.
 - Devtools (`TanStackDevtools`) ship in `__root.tsx` — strip or gate before production if undesired.
 - Dev server port is **3000**, same as TanStack Start prod server — kill one before running the other.
-- Don't propose swapping Logto back to Keycloak (project decision, even though challenge spec mentions Keycloak).
+- Don't propose swapping Logto for another IdP — project decision, OIDC contract is what's pinned.
 - `vite.config.ts` sets `routeFileIgnorePattern` so `*.test.tsx` files inside `src/routes/` are not picked up as routes — keep that pattern intact when adding test files there.
 
 ## Pointers

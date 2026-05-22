@@ -11,8 +11,8 @@ JavaScript precision arithmetic (IEEE 754) generates results such as
 **Rule**: The system must treat all values in the database and in code as
 integers representing cents. For example, `R$ 10.50` equals `1050` and the
 maximum bet `R$ 1,000.00` equals `100000`. Only use divisions for presentation
-in the UI. **Floating-point numbers are prohibited.** The challenge lists
-floating-point arithmetic for money as an immediate-disqualification offence.
+in the UI. **Floating-point numbers are prohibited** on the money path —
+treat any float arithmetic against monetary values as an immediate bug.
 
 ## 2. Anemic domain models
 

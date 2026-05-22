@@ -10,10 +10,9 @@ stops abruptly at a predetermined value.
 If you cash out in time, you win the bet amount multiplied by the multiplier at
 the exact moment of the cash out. Otherwise, you lose the bet.
 
-## Challenge and context
+## Scope and goals
 
-This project is a technical test for Jungle Gaming. It evaluates the following
-competencies:
+The implementation exercises the following competencies:
 
 - Microservices architecture and Domain-Driven Design (DDD).
 - Asynchronous event-driven communication.
@@ -50,10 +49,10 @@ competencies:
 ## Technology scope
 
 The project embraces a modern, efficient, and scalable technology stack. The
-challenge accepts alternatives per layer; the choices below are the ones
-adopted in this implementation.
+table below lists the adopted choice per layer alongside common alternatives
+that would fit the same role.
 
-| Layer            | Choice                                | Alternatives accepted by the challenge |
+| Layer            | Choice                                | Common alternatives                    |
 | ---------------- | ------------------------------------- | -------------------------------------- |
 | Runtime          | Bun (latest)                          | —                                      |
 | Backend          | NestJS + TypeScript strict            | —                                      |
@@ -71,9 +70,8 @@ adopted in this implementation.
 | API docs         | Swagger / OpenAPI (`@nestjs/swagger`) | —                                      |
 | Infra            | Docker Compose                        | —                                      |
 
-> The challenge lists Keycloak as the preferred IdP. This project replaces it
-> with Logto under the same OIDC contract — Kong validates JWTs against
-> Logto's discovery document.
+> Logto is the chosen IdP, under the standard OIDC contract — Kong validates
+> JWTs against Logto's discovery document.
 
 ## Setup
 

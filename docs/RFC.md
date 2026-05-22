@@ -1,7 +1,6 @@
 # Game rules and technical RFC
 
 **Title:** Crash Game engine (Microservices and DDD)
-**Authors:** Architecture (Jungle Gaming)
 
 ## 1. Overview
 

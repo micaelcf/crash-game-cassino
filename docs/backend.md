@@ -7,11 +7,11 @@ strict with financial precision.
 ## Technology stack
 
 - **Framework**: NestJS (TypeScript strict mode)
-- **ORM**: MikroORM (PostgreSQL). The challenge also accepts Prisma or TypeORM
-  if you prefer a different ORM in a future iteration.
+- **ORM**: MikroORM (PostgreSQL). Prisma or TypeORM are viable alternatives
+  if a future iteration wants a different ORM.
 - **Runtime**: Bun
-- **Broker**: RabbitMQ. Kafka and AWS SQS (via LocalStack) are accepted
-  alternatives by the challenge.
+- **Broker**: RabbitMQ. Kafka and AWS SQS (via LocalStack) are viable
+  alternatives.
 - **Sockets**: `@nestjs/websockets` and `socket.io`. Use `ws` only if your
   client deliberately avoids the Socket.IO protocol.
 - **API docs**: `@nestjs/swagger` exposed per service.

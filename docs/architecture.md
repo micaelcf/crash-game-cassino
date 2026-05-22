@@ -106,6 +106,6 @@ as part of the compose lifecycle.
 - **Backend web framework**: NestJS with MikroORM for persistence
 - **Frontend web framework**: TanStack Start (hybrid SSR/SPA)
 - **API gateway**: Kong
-- **Authentication**: Logto (OpenID Connect) — replaces the Keycloak default
-  from the challenge spec under the same OIDC contract
+- **Authentication**: Logto (OpenID Connect) — Kong validates JWTs against
+  Logto's discovery document
 - **Message broker**: RabbitMQ

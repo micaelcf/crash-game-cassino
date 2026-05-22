@@ -35,7 +35,7 @@ On the consumer side, an **inbox** table records every processed event ID
 inside the same transaction as the side effect. A duplicate delivery is
 detected on the unique constraint and skipped. Together, outbox plus inbox give
 you at-least-once delivery on the wire and exactly-once processing at the
-business layer — the bonus criterion called out by the challenge.
+business layer.
 
 ## 4. Rigid DTOs and validation
 
