@@ -12,7 +12,14 @@
 			"!**/node_modules",
 			"!**/dist",
 			"!**/.output",
-			"!**/coverage"
+			"!**/coverage",
+			"!**/migrations",
+			"!**/*.gen.ts",
+			"!**/*.gen.tsx",
+			"!**/*.tsbuildinfo",
+			"!packages/api-client/src/games/**",
+			"!packages/api-client/src/wallets/**",
+			"!services/*/openapi.json"
 		]
 	},
 	"formatter": {

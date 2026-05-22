@@ -11,7 +11,9 @@
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"typecheck": "bun run --cwd services/games typecheck && bun run --cwd services/wallets typecheck",
-		"test:unit": "bun run --cwd services/games test && bun run --cwd services/wallets test"
+		"test:unit": "bun run --cwd services/games test && bun run --cwd services/wallets test",
+		"swagger:dump": "bun run --cwd services/games swagger:dump && bun run --cwd services/wallets swagger:dump",
+		"codegen": "bun run swagger:dump && bun run --cwd packages/api-client build"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.15",
