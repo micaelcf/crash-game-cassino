@@ -9,6 +9,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json bun.lock ./
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/api-client/package.json ./packages/api-client/
 COPY services/games/package.json ./services/games/
 COPY services/wallets/package.json ./services/wallets/
 COPY frontend/package.json ./frontend/
@@ -18,7 +19,10 @@ RUN bun install --frozen-lockfile
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
+COPY --from=deps /app/packages/api-client/node_modules ./packages/api-client/node_modules
 COPY packages/contracts ./packages/contracts
+COPY packages/api-client/package.json ./packages/api-client/package.json
+COPY packages/api-client/src ./packages/api-client/src
 COPY frontend ./frontend
 WORKDIR /app/frontend
 RUN bun run build

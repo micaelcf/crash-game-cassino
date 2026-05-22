@@ -8,6 +8,7 @@ WORKDIR /app
 
 COPY package.json bun.lock ./
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/api-client/package.json ./packages/api-client/
 COPY services/games/package.json ./services/games/
 COPY services/wallets/package.json ./services/wallets/
 COPY frontend/package.json ./frontend/
