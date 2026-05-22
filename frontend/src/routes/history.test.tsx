@@ -135,7 +135,7 @@ describe("/history", () => {
 		);
 		renderWithProviders(<HistoryPage />);
 		await waitFor(() =>
-			expect(screen.getByText(/page 1 of 4/i)).toBeInTheDocument(),
+			expect(screen.getByText(/showing/i)).toBeInTheDocument(),
 		);
 		const buttons = screen.getAllByRole("button");
 		const prev = buttons.find((b) => /prev/i.test(b.textContent ?? ""));
@@ -163,7 +163,7 @@ describe("/history", () => {
 		);
 		renderWithProviders(<HistoryPage />);
 		await waitFor(() =>
-			expect(screen.getByText(/page 1 of 4/i)).toBeInTheDocument(),
+			expect(screen.getByText(/showing/i)).toBeInTheDocument(),
 		);
 		const next = screen
 			.getAllByRole("button")

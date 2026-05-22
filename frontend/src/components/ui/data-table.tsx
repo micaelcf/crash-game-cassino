@@ -1,4 +1,9 @@
-import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react";
+import {
+	CaretDoubleLeftIcon,
+	CaretDoubleRightIcon,
+	CaretLeftIcon,
+	CaretRightIcon,
+} from "@phosphor-icons/react";
 import {
 	type ColumnDef,
 	flexRender,
@@ -168,58 +173,125 @@ function DataTablePager({
 			? Math.min(totalItems, (page - 1) * pageSize + dataLength)
 			: null;
 
+	const tokens = totalPages != null ? buildPageTokens(page, totalPages) : null;
+
 	return (
-		<div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-			<div className="flex flex-col gap-0.5">
-				<span className="font-mono text-[10px] uppercase tracking-[0.25em] text-fg-dim">
-					{totalPages != null
-						? `Page ${page} of ${totalPages}`
-						: `Page ${page}`}
-				</span>
-				{totalItems != null && rangeStart != null && rangeEnd != null && (
-					<span className="font-mono text-[10px] text-fg-dim">
-						{rangeStart}–{rangeEnd} of {totalItems}
-					</span>
+		<nav
+			aria-label="Pagination"
+			className="flex flex-col items-stretch justify-between gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center">
+			<p className="text-sm text-fg-muted">
+				{totalItems != null && rangeStart != null && rangeEnd != null ? (
+					<>
+						Showing{" "}
+						<span className="font-semibold text-fg">{rangeStart}</span>
+						<span className="text-fg-dim">–</span>
+						<span className="font-semibold text-fg">{rangeEnd}</span>{" "}
+						<span className="text-fg-dim">of</span>{" "}
+						<span className="font-semibold text-fg">{totalItems}</span>
+					</>
+				) : (
+					<>
+						<span className="text-fg-dim">Page</span>{" "}
+						<span className="font-semibold text-fg">{page}</span>
+					</>
 				)}
-			</div>
-			<div className="flex gap-2 sm:justify-end">
+			</p>
+
+			<div className="flex items-center gap-1.5 sm:justify-end">
 				<Button
-					variant="secondary"
+					variant="ghost"
 					size="sm"
 					onClick={() => onPageChange(1)}
 					disabled={!canPrev}
 					aria-label="First page">
-					«
+					<CaretDoubleLeftIcon size={16} weight="bold" />
 				</Button>
 				<Button
-					variant="secondary"
+					variant="ghost"
 					size="sm"
 					onClick={() => onPageChange(Math.max(1, page - 1))}
-					disabled={!canPrev}>
-					<ArrowLeftIcon size={12} weight="bold" />
-					Prev
+					disabled={!canPrev}
+					aria-label="Previous page">
+					<CaretLeftIcon size={16} weight="bold" />
+					<span className="hidden sm:inline">Previous</span>
 				</Button>
+
+				{tokens && (
+					<ul className="hidden items-center gap-1 sm:flex">
+						{tokens.map((tok, idx) =>
+							tok === "…" ? (
+								<li
+									// biome-ignore lint/suspicious/noArrayIndexKey: ellipsis tokens have no stable id; window is small and re-renders cheaply.
+									key={`ellipsis-${idx}`}
+									aria-hidden="true"
+									className="px-2 text-sm text-fg-dim">
+									…
+								</li>
+							) : (
+								<li key={tok}>
+									<Button
+										variant={tok === page ? "primary" : "ghost"}
+										size="sm"
+										aria-current={tok === page ? "page" : undefined}
+										aria-label={`Page ${tok}`}
+										onClick={() => onPageChange(tok)}
+										className="min-w-9 font-mono tabular-nums">
+										{tok}
+									</Button>
+								</li>
+							),
+						)}
+					</ul>
+				)}
+
 				<Button
-					variant="secondary"
+					variant="ghost"
 					size="sm"
 					onClick={() => onPageChange(page + 1)}
-					disabled={!canNext}>
-					Next
-					<ArrowRightIcon size={12} weight="bold" />
+					disabled={!canNext}
+					aria-label="Next page">
+					<span className="hidden sm:inline">Next</span>
+					<CaretRightIcon size={16} weight="bold" />
 				</Button>
 				{totalPages != null && (
 					<Button
-						variant="secondary"
+						variant="ghost"
 						size="sm"
 						onClick={() => onPageChange(totalPages)}
 						disabled={!canNext}
 						aria-label="Last page">
-						»
+						<CaretDoubleRightIcon size={16} weight="bold" />
 					</Button>
 				)}
 			</div>
-		</div>
+		</nav>
 	);
+}
+
+/**
+ * Compute the visible page tokens around the current page.
+ *
+ * Returns a list mixing page numbers and `"…"` ellipsis markers. Keeps a
+ * fixed-width window so the pager doesn't reflow as the user paginates.
+ * Examples (page = 1, total = 1):  [1]
+ *           (page = 4, total = 10): [1, "…", 3, 4, 5, "…", 10]
+ *           (page = 1, total = 5):  [1, 2, 3, 4, 5]
+ */
+function buildPageTokens(
+	page: number,
+	totalPages: number,
+): Array<number | "…"> {
+	if (totalPages <= 7) {
+		return Array.from({ length: totalPages }, (_, i) => i + 1);
+	}
+	const tokens: Array<number | "…"> = [1];
+	const start = Math.max(2, page - 1);
+	const end = Math.min(totalPages - 1, page + 1);
+	if (start > 2) tokens.push("…");
+	for (let i = start; i <= end; i++) tokens.push(i);
+	if (end < totalPages - 1) tokens.push("…");
+	tokens.push(totalPages);
+	return tokens;
 }
 
 function DataTableSkeleton({
