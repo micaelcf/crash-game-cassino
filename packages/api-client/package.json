@@ -1,0 +1,28 @@
+{
+	"name": "@crash/api-client",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": "./src/index.ts",
+		"./games": "./src/games/index.ts",
+		"./wallets": "./src/wallets/index.ts",
+		"./mutator": "./src/mutator/fetch-client.ts"
+	},
+	"scripts": {
+		"build": "orval --config orval.config.ts"
+	},
+	"dependencies": {
+		"@tanstack/react-query": "*",
+		"react": "*"
+	},
+	"peerDependencies": {
+		"@tanstack/react-query": "^5.0.0",
+		"react": "^19.0.0"
+	},
+	"devDependencies": {
+		"orval": "^7.6.0",
+		"typescript": "^5.8.3"
+	}
+}
