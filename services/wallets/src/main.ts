@@ -6,9 +6,10 @@ import {
 	FastifyAdapter,
 	NestFastifyApplication,
 } from '@nestjs/platform-fastify'
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { SwaggerModule } from '@nestjs/swagger'
 import { apiReference } from '@scalar/nestjs-api-reference'
 import { AppModule } from '@/app.module'
+import { buildSwaggerConfig } from '@/swagger.config'
 
 async function bootstrap(): Promise<void> {
 	const app = await NestFactory.create<NestFastifyApplication>(
@@ -19,13 +20,7 @@ async function bootstrap(): Promise<void> {
 
 	await app.get(MikroORM).migrator.up()
 
-	const swaggerConfig = new DocumentBuilder()
-		.setTitle('Wallets Service')
-		.setDescription('Player wallet management API for Crash Game.')
-		.setVersion('0.1.0')
-		.addBearerAuth()
-		.build()
-	const document = SwaggerModule.createDocument(app, swaggerConfig)
+	const document = SwaggerModule.createDocument(app, buildSwaggerConfig())
 	app.use(
 		'/docs',
 		apiReference({

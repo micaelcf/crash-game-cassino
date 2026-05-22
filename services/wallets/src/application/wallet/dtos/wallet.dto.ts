@@ -1,14 +1,12 @@
-import type { WalletDto as WalletDtoContract } from '@crash/contracts'
 import type { Wallet } from '@domain/wallet/wallet.entity'
 import { ApiProperty } from '@nestjs/swagger'
 
 /**
- * Swagger-decorated wrapper around the wire-format `WalletDto` from
- * `@crash/contracts`. The decorators stay backend-side; the cross-stack
- * type contract is enforced by `implements`.
+ * Wire shape for the player wallet. Balance is integer cents serialized
+ * as a string to preserve BigInt precision over JSON.
  */
-export class WalletDto implements WalletDtoContract {
-	@ApiProperty({ description: 'Wallet identifier.' })
+export class WalletDto {
+	@ApiProperty({ format: 'uuid', description: 'Wallet identifier.' })
 	id!: string
 
 	@ApiProperty({ description: 'Owner player id (matches JWT sub claim).' })

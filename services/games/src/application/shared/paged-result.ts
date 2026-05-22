@@ -1,9 +1,5 @@
 import type { PagedResult, PaginationParams } from '@crash/contracts'
-import type {
-	FilterQuery,
-	FindOptions,
-	Loaded,
-} from '@mikro-orm/postgresql'
+import type { FilterQuery, FindOptions, Loaded } from '@mikro-orm/postgresql'
 
 export type { PagedResult }
 
@@ -26,22 +22,38 @@ export const normalizePagination = (
 	return { page, pageSize, offset: (page - 1) * pageSize, limit: pageSize }
 }
 
-interface FindAndCountable<T extends object> {
+interface FindAndCountable<
+	T,
+	Hint extends string = never,
+	Fields extends string = never,
+	Excludes extends string = never,
+> {
 	findAndCount(
 		where: FilterQuery<T>,
-		options?: FindOptions<T, any, any, any>,
-	): Promise<[Loaded<T, any, any, any>[], number]>
+		options?: FindOptions<T, Hint, Fields, Excludes>,
+	): Promise<[Loaded<T, Hint, Fields, Excludes>[], number]>
 }
 
-export type PaginateOptions<T extends object> = PaginationParams & {
-	orderBy: FindOptions<T>['orderBy']
-	populate?: FindOptions<T>['populate']
+export type PaginateOptions<
+	T,
+	Hint extends string = never,
+	Fields extends string = never,
+	Excludes extends string = never,
+> = PaginationParams & {
+	orderBy: FindOptions<T, Hint, Fields, Excludes>['orderBy']
+	populate?: FindOptions<T, Hint, Fields, Excludes>['populate']
 }
 
-export const paginate = async <T extends object, R>(
-	repo: FindAndCountable<T>,
+export const paginate = async <
+	T,
+	R,
+	Hint extends string = never,
+	Fields extends string = never,
+	Excludes extends string = never,
+>(
+	repo: FindAndCountable<T, Hint, Fields, Excludes>,
 	where: FilterQuery<T>,
-	opts: PaginateOptions<T>,
+	opts: PaginateOptions<T, Hint, Fields, Excludes>,
 	map: (entity: T) => R,
 ): Promise<PagedResult<R>> => {
 	const { page, pageSize, offset, limit } = normalizePagination(opts)

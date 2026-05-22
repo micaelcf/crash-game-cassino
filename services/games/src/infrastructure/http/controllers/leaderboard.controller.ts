@@ -1,12 +1,18 @@
-import { GetLeaderboardQuery } from '@application/leaderboard/dtos/get-leaderboard.query'
 import {
 	LEADERBOARD_WINDOWS,
-	type LeaderboardResponse,
+	LeaderboardResponseDto,
 	LeaderboardWindow,
-} from '@crash/contracts'
+} from '@application/leaderboard/dtos/leaderboard.dto'
+import { GetLeaderboardQuery } from '@application/leaderboard/dtos/get-leaderboard.query'
 import { BadRequestException, Controller, Get, Query } from '@nestjs/common'
 import { QueryBus } from '@nestjs/cqrs'
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
+import {
+	ApiExtraModels,
+	ApiOkResponse,
+	ApiOperation,
+	ApiQuery,
+	ApiTags,
+} from '@nestjs/swagger'
 
 const MAX_LIMIT = 50
 const DEFAULT_LIMIT = 20
@@ -24,21 +30,35 @@ const isWindow = (value: string): value is LeaderboardWindow =>
 	(LEADERBOARD_WINDOWS as readonly string[]).includes(value)
 
 @ApiTags('leaderboard')
+@ApiExtraModels(LeaderboardResponseDto)
 @Controller('leaderboard')
 export class LeaderboardController {
 	constructor(private readonly queryBus: QueryBus) {}
 
 	@Get()
 	@ApiOperation({
+		operationId: 'getLeaderboard',
 		summary: 'Top players by gross winnings over a sliding time window.',
 	})
-	@ApiQuery({ name: 'window', enum: ['24h', '7d'], required: false })
-	@ApiQuery({ name: 'limit', required: false, schema: { type: 'integer' } })
-	@ApiOkResponse({ description: 'Leaderboard snapshot.' })
+	@ApiQuery({
+		name: 'window',
+		enum: LeaderboardWindow,
+		enumName: 'LeaderboardWindow',
+		required: false,
+	})
+	@ApiQuery({
+		name: 'limit',
+		required: false,
+		schema: { type: 'integer', minimum: 1, maximum: MAX_LIMIT },
+	})
+	@ApiOkResponse({
+		description: 'Leaderboard snapshot.',
+		type: LeaderboardResponseDto,
+	})
 	async leaderboard(
 		@Query('window') windowRaw?: string,
 		@Query('limit') limitRaw?: string,
-	): Promise<LeaderboardResponse> {
+	): Promise<LeaderboardResponseDto> {
 		const window = windowRaw ?? LeaderboardWindow.TWENTY_FOUR_HOURS
 		if (!isWindow(window)) {
 			throw new BadRequestException(

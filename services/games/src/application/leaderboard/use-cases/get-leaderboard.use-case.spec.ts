@@ -1,6 +1,6 @@
 import { GetLeaderboardQuery } from '@application/leaderboard/dtos/get-leaderboard.query'
 import { GetLeaderboardUseCase } from '@application/leaderboard/use-cases/get-leaderboard.use-case'
-import { LeaderboardWindow } from '@crash/contracts'
+import { LeaderboardWindow } from '@application/leaderboard/dtos/leaderboard.dto'
 import { Bet, BetStatus } from '@domain/bet/bet.entity'
 import type { Clock } from '@domain/shared/clock'
 import type { BaseRepository } from '@infrastructure/db/base.repository'

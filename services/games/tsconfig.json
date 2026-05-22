@@ -28,5 +28,10 @@
 		}
 	},
 	"include": ["src/**/*", "tests/**/*"],
-	"exclude": ["node_modules", "dist", "tests/e2e/cross-service.e2e.spec.ts"]
+	"exclude": [
+		"node_modules",
+		"dist",
+		"src/migrations/**",
+		"tests/e2e/cross-service.e2e.spec.ts"
+	]
 }

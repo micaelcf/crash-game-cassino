@@ -13,7 +13,7 @@ import {
 } from '@nestjs/swagger'
 
 @ApiTags('wallets')
-@ApiBearerAuth()
+@ApiBearerAuth('logto')
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class WalletsController {
@@ -21,10 +21,14 @@ export class WalletsController {
 
 	@Get('me')
 	@ApiOperation({
+		operationId: 'getMyWallet',
 		summary:
 			'Return the authenticated player wallet (auto-provisioned on first read).',
 	})
-	@ApiOkResponse({ description: 'Wallet found or freshly created.', type: WalletDto })
+	@ApiOkResponse({
+		description: 'Wallet found or freshly created.',
+		type: WalletDto,
+	})
 	async getMyWallet(@Req() req: AuthenticatedRequest): Promise<WalletDto> {
 		const wallet: Wallet = await this.queryBus.execute(
 			new GetWalletQuery(req.user.sub),

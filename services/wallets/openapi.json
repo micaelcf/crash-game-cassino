@@ -1,0 +1,140 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/metrics": {
+      "get": {
+        "operationId": "PrometheusController_index",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prometheus"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Service is up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "getMyWallet",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Wallet found or freshly created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "logto": []
+          }
+        ],
+        "summary": "Return the authenticated player wallet (auto-provisioned on first read).",
+        "tags": [
+          "wallets"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Wallets Service",
+    "description": "Player wallet management API for Crash Game.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "/wallets",
+      "description": "Kong gateway route"
+    },
+    {
+      "url": "http://localhost:4002",
+      "description": "Direct (development only)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "logto": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "HealthCheckResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "service": {
+            "type": "string",
+            "example": "wallets"
+          }
+        },
+        "required": [
+          "status",
+          "service"
+        ]
+      },
+      "WalletDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Wallet identifier."
+          },
+          "playerId": {
+            "type": "string",
+            "description": "Owner player id (matches JWT sub claim)."
+          },
+          "balance": {
+            "type": "string",
+            "description": "Balance in integer cents as a string to preserve BigInt precision.",
+            "example": "100000"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "playerId",
+          "balance"
+        ]
+      }
+    }
+  }
+}

@@ -5,6 +5,7 @@
 	"scripts": {
 		"dev": "bun run --watch src/main.ts",
 		"start": "bun run src/main.ts",
+		"swagger:dump": "bun run scripts/dump-openapi.ts",
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run src",
 		"test:watch": "vitest src",
@@ -23,9 +24,7 @@
 	},
 	"mikro-orm": {
 		"useTsNode": true,
-		"configPaths": [
-			"./src/infrastructure/db/mikro-orm.config.ts"
-		]
+		"configPaths": ["./src/infrastructure/db/mikro-orm.config.ts"]
 	},
 	"dependencies": {
 		"@crash/contracts": "workspace:*",

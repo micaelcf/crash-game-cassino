@@ -1,9 +1,10 @@
 import { GetLeaderboardQuery } from '@application/leaderboard/dtos/get-leaderboard.query'
 import {
+	type LeaderboardResponseDto,
 	type LeaderboardRow,
+	LeaderboardWindow,
 	toLeaderboardEntry,
 } from '@application/leaderboard/dtos/leaderboard.dto'
-import { type LeaderboardResponse, LeaderboardWindow } from '@crash/contracts'
 import { Bet, BetStatus } from '@domain/bet/bet.entity'
 import { CLOCK, type Clock } from '@domain/shared/clock'
 import { BaseRepository } from '@infrastructure/db/base.repository'
@@ -12,7 +13,7 @@ import { Inject, Injectable } from '@nestjs/common'
 
 interface CacheEntry {
 	expiresAt: number
-	response: LeaderboardResponse
+	response: LeaderboardResponseDto
 }
 
 const CACHE_TTL_MS = 30_000
@@ -45,7 +46,7 @@ export class GetLeaderboardUseCase {
 		@Inject(CLOCK) private readonly clock: Clock,
 	) {}
 
-	async execute(query: GetLeaderboardQuery): Promise<LeaderboardResponse> {
+	async execute(query: GetLeaderboardQuery): Promise<LeaderboardResponseDto> {
 		const now = this.clock.now()
 		const cached = this.cache.get(query.window)
 		if (cached && cached.expiresAt > now.getTime()) {
@@ -71,7 +72,7 @@ export class GetLeaderboardUseCase {
 			.getConnection()
 			.execute<QueryRow[]>(sql, [BetStatus.WON, windowStart, query.limit])
 
-		const response: LeaderboardResponse = {
+		const response: LeaderboardResponseDto = {
 			window: query.window,
 			entries: rows.map((r) =>
 				toLeaderboardEntry({

@@ -1,0 +1,688 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/metrics": {
+      "get": {
+        "operationId": "PrometheusController_index",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Prometheus"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Service is up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/bets/me": {
+      "get": {
+        "operationId": "getMyBets",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of the player bets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedBetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "logto": []
+          }
+        ],
+        "summary": "List bets placed by the authenticated player.",
+        "tags": [
+          "bets"
+        ]
+      }
+    },
+    "/bet": {
+      "post": {
+        "operationId": "placeBet",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceBetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bet accepted; persisted in PENDING.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BetDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Round not in BETTING_PHASE, duplicate bet for this round, or other domain conflict."
+          }
+        },
+        "security": [
+          {
+            "logto": []
+          }
+        ],
+        "summary": "Place a bet on the current round.",
+        "tags": [
+          "bets"
+        ]
+      }
+    },
+    "/bet/cashout": {
+      "post": {
+        "operationId": "cashOut",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Bet settled as WON with the payout.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BetDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Round not in FLYING, no active bet, or the bet was already settled."
+          }
+        },
+        "security": [
+          {
+            "logto": []
+          }
+        ],
+        "summary": "Cash out the current bet at the live multiplier.",
+        "tags": [
+          "bets"
+        ]
+      }
+    },
+    "/rounds/current": {
+      "get": {
+        "operationId": "getCurrentRound",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Active round snapshot, or null when no round is in BETTING_PHASE/FLYING.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/RoundDto"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Return the round currently open for bets or in flight, or null between rounds.",
+        "tags": [
+          "rounds"
+        ]
+      }
+    },
+    "/rounds/history": {
+      "get": {
+        "operationId": "getRoundHistory",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated round history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedRoundDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Paginated history of crashed rounds.",
+        "tags": [
+          "rounds"
+        ]
+      }
+    },
+    "/rounds/{roundId}/verify": {
+      "get": {
+        "operationId": "verifyRound",
+        "parameters": [
+          {
+            "name": "roundId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server seed, client seed, nonce and crash point.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoundVerifyDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Round not found or has not crashed yet."
+          }
+        },
+        "summary": "Reveal the provably-fair verification payload.",
+        "tags": [
+          "rounds"
+        ]
+      }
+    },
+    "/leaderboard": {
+      "get": {
+        "operationId": "getLeaderboard",
+        "parameters": [
+          {
+            "name": "window",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LeaderboardWindow"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Leaderboard snapshot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaderboardResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Top players by gross winnings over a sliding time window.",
+        "tags": [
+          "leaderboard"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Games Service",
+    "description": "Crash Game engine API: rounds, bets, provably fair.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "/games",
+      "description": "Kong gateway route"
+    },
+    {
+      "url": "http://localhost:4001",
+      "description": "Direct (development only)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "logto": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "HealthCheckResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "service": {
+            "type": "string",
+            "example": "games"
+          }
+        },
+        "required": [
+          "status",
+          "service"
+        ]
+      },
+      "BetStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "CONFIRMED",
+          "CANCELLED",
+          "WON",
+          "LOST"
+        ]
+      },
+      "BetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Owner user id (matches JWT sub claim)."
+          },
+          "username": {
+            "type": "string"
+          },
+          "amountCents": {
+            "type": "string",
+            "description": "Bet amount in integer cents as a string.",
+            "example": "1000"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BetStatus"
+              }
+            ]
+          },
+          "cashoutMultiplierHundredths": {
+            "type": "number",
+            "nullable": true,
+            "description": "Cashout multiplier in integer hundredths (150 = 1.50x).",
+            "example": 150
+          },
+          "payoutCents": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payout in integer cents as a string. null until settled.",
+            "example": "1500"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "username",
+          "amountCents",
+          "status",
+          "cashoutMultiplierHundredths",
+          "payoutCents",
+          "createdAt"
+        ]
+      },
+      "PagedBetDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "example": 20
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0,
+            "example": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BetDto"
+            }
+          }
+        },
+        "required": [
+          "page",
+          "pageSize",
+          "total",
+          "items"
+        ]
+      },
+      "PlaceBetDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Bet amount in integer cents, e.g. \"1000\" for R$ 10.00.",
+            "example": "1000"
+          }
+        },
+        "required": [
+          "amount"
+        ]
+      },
+      "RoundStatus": {
+        "type": "string",
+        "enum": [
+          "BETTING_PHASE",
+          "FLYING",
+          "CRASHED"
+        ]
+      },
+      "RoundDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nonce": {
+            "type": "number",
+            "description": "Monotonic round counter."
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoundStatus"
+              }
+            ]
+          },
+          "hashCommitment": {
+            "type": "string",
+            "description": "SHA-256 commitment of the server seed."
+          },
+          "clientSeed": {
+            "type": "string",
+            "description": "Pre-published client seed mixed into the crash-point HMAC."
+          },
+          "bettingEndsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "flyingStartedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "crashedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "growthRate": {
+            "type": "number",
+            "description": "Exponential growth rate k for m(t) = exp(k * Δt)."
+          },
+          "crashPointHundredths": {
+            "type": "number",
+            "description": "Crash point in integer hundredths. Null until CRASHED.",
+            "nullable": true,
+            "example": 250
+          },
+          "serverSeed": {
+            "type": "string",
+            "description": "Revealed server seed. Null until the round CRASHED.",
+            "nullable": true
+          },
+          "bets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BetDto"
+            }
+          },
+          "serverTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Server timestamp captured when this payload was generated. Used by the frontend to align multiplier projections."
+          }
+        },
+        "required": [
+          "id",
+          "nonce",
+          "status",
+          "hashCommitment",
+          "clientSeed",
+          "bettingEndsAt",
+          "flyingStartedAt",
+          "crashedAt",
+          "growthRate",
+          "crashPointHundredths",
+          "serverSeed",
+          "bets",
+          "serverTime"
+        ]
+      },
+      "RoundVerifyDto": {
+        "type": "object",
+        "properties": {
+          "roundId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nonce": {
+            "type": "number"
+          },
+          "serverSeed": {
+            "type": "string",
+            "description": "Revealed server seed."
+          },
+          "clientSeed": {
+            "type": "string"
+          },
+          "hashCommitment": {
+            "type": "string"
+          },
+          "crashPointHundredths": {
+            "type": "number",
+            "description": "Crash point in integer hundredths."
+          }
+        },
+        "required": [
+          "roundId",
+          "nonce",
+          "serverSeed",
+          "clientSeed",
+          "hashCommitment",
+          "crashPointHundredths"
+        ]
+      },
+      "PagedRoundDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100,
+            "example": 20
+          },
+          "total": {
+            "type": "number",
+            "minimum": 0,
+            "example": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoundDto"
+            }
+          }
+        },
+        "required": [
+          "page",
+          "pageSize",
+          "total",
+          "items"
+        ]
+      },
+      "LeaderboardWindow": {
+        "type": "string",
+        "enum": [
+          "24h",
+          "7d"
+        ]
+      },
+      "LeaderboardEntryDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Owner user id."
+          },
+          "username": {
+            "type": "string"
+          },
+          "winningsCents": {
+            "type": "string",
+            "description": "Gross winnings in integer cents as a string.",
+            "example": "12500"
+          },
+          "betsCount": {
+            "type": "number",
+            "description": "Number of bets contributing to the row."
+          },
+          "biggestMultiplierHundredths": {
+            "type": "number",
+            "description": "Biggest multiplier hit in integer hundredths (250 = 2.50x).",
+            "example": 250
+          }
+        },
+        "required": [
+          "userId",
+          "username",
+          "winningsCents",
+          "betsCount",
+          "biggestMultiplierHundredths"
+        ]
+      },
+      "LeaderboardResponseDto": {
+        "type": "object",
+        "properties": {
+          "window": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LeaderboardWindow"
+              }
+            ]
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardEntryDto"
+            }
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Generation timestamp; used as a freshness cue by the UI."
+          }
+        },
+        "required": [
+          "window",
+          "entries",
+          "generatedAt"
+        ]
+      }
+    }
+  }
+}
